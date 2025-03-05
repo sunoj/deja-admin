@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminToken } from '../../middleware/auth';
 
 export async function onRequestGet(context) {
   try {
@@ -14,21 +15,41 @@ export async function onRequestGet(context) {
       'Content-Type': 'application/json'
     };
 
-    // Get employee_id from request headers
-    const employeeId = context.request.headers.get('X-Employee-ID');
-    if (!employeeId) {
-      return new Response(
-        JSON.stringify({ error: 'Employee ID is required' }),
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
-    // Get pagination parameters from query
+    // Get query parameters
     const url = new URL(context.request.url);
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const status = url.searchParams.get('status');
     const showAll = url.searchParams.get('all') === 'true';
+    const startDate = url.searchParams.get('start_date');
+    const endDate = url.searchParams.get('end_date');
+    const filterEmployeeId = url.searchParams.get('employee_id');
+
+    // Get employee_id from request headers
+    const employeeId = context.request.headers.get('X-Employee-ID');
+    const authHeader = context.request.headers.get('Authorization');
+
+    // If no employee_id is provided, verify admin token
+    if (!employeeId) {
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({ error: 'Admin authentication required' }),
+          { status: 401, headers: corsHeaders }
+        );
+      }
+
+      const token = authHeader.split(' ')[1];
+      
+      try {
+        // Verify admin token using middleware
+        await verifyAdminToken(supabase, token);
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 401, headers: corsHeaders }
+        );
+      }
+    }
 
     // Calculate offset
     const offset = (page - 1) * limit;
@@ -42,9 +63,23 @@ export async function onRequestGet(context) {
         assignee:employees!assigned_to(name)
       `, { count: 'exact' });
     
-    // Only filter by employee if not showing all
-    if (!showAll) {
+    // Apply filters based on user type
+    if (employeeId) {
+      // User scenario: only show their own work orders
       query = query.or(`created_by.eq.${employeeId},assigned_to.eq.${employeeId}`);
+    } else {
+      // Admin scenario: can filter by employee if provided
+      if (filterEmployeeId) {
+        query = query.eq('assigned_to', filterEmployeeId);
+      }
+    }
+    
+    // Apply date range filter if provided
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    if (endDate) {
+      query = query.lte('created_at', endDate);
     }
     
     // Apply status filter if provided
@@ -63,23 +98,20 @@ export async function onRequestGet(context) {
 
     if (error) {
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch orders', details: error.message }),
+        JSON.stringify({ error: 'Failed to fetch work orders', details: error.message }),
         { status: 500, headers: corsHeaders }
       );
     }
 
-    // Calculate total pages
-    const totalPages = Math.ceil(count / limit);
-
-    // Return the orders with pagination info
+    // Return the work orders with pagination info
     return new Response(
       JSON.stringify({
-        orders,
+        work_orders: orders,
         pagination: {
           total: count,
           page: page,
           limit: limit,
-          pages: totalPages
+          pages: Math.ceil(count / limit)
         }
       }),
       { status: 200, headers: corsHeaders }

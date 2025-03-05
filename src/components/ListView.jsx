@@ -12,9 +12,9 @@ function ListView({ checkins, selectedEmployee, onIpClick }) {
 
   if (sortedCheckins.length === 0) {
     return (
-      <div className="w-full">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+      <div className="card">
+        <div className="table-container">
+          <table className="table">
             <tbody>
               <tr>
                 <td colSpan="8" className="px-6 py-4 text-center text-gray-500">No check-in records found</td>
@@ -27,22 +27,22 @@ function ListView({ checkins, selectedEmployee, onIpClick }) {
   }
 
   return (
-    <div className="w-full">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+    <div className="card">
+      <div className="table-container">
+        <table className="table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penalty</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exemption</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Meal Allowance</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Employee</th>
+              <th>Status</th>
+              <th>Penalty</th>
+              <th>Exemption</th>
+              <th>Meal Allowance</th>
+              <th>IP Address</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody>
             {sortedCheckins.map(checkin => {
               const checkinDate = new Date(checkin.created_at);
               const employeeName = checkin.employees ? checkin.employees.name : 'Unknown';
@@ -52,18 +52,20 @@ function ListView({ checkins, selectedEmployee, onIpClick }) {
               const mealAllowance = checkin.meal_allowance ? 'Yes' : 'No';
 
               return (
-                <tr key={checkin.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(checkinDate)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatTime(checkinDate)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employeeName}</td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${statusClass}`}>
-                    {getStatusText(checkin.late_status)}
+                <tr key={checkin.id}>
+                  <td>{formatDate(checkinDate)}</td>
+                  <td>{formatTime(checkinDate)}</td>
+                  <td>{employeeName}</td>
+                  <td>
+                    <span className={`badge ${statusClass}`}>
+                      {getStatusText(checkin.late_status)}
+                    </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{penalty}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{exemption}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{mealAllowance}</td>
+                  <td>{penalty}</td>
+                  <td>{exemption}</td>
+                  <td>{mealAllowance}</td>
                   <td
-                    className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer hover:text-blue-800"
+                    className="text-blue-600 cursor-pointer hover:text-blue-800"
                     onClick={() => onIpClick(checkin.ip_info)}
                   >
                     {checkin.ip_address || '-'}

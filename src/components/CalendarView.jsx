@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatTime, getStatusClass, getStatusText } from '../services/api';
+import DaySummaryModal from './DaySummaryModal';
 
-function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }) {
+function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedEmployee, onMonthChange }) {
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedDayData, setSelectedDayData] = useState({
+    checkins: [],
+    workOrders: [],
+    sopRecords: []
+  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDay = new Date(year, month, 1);
@@ -23,6 +32,12 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
     onMonthChange(new Date(year, month + 1));
   };
 
+  const handleDayClick = (date, dayData) => {
+    setSelectedDay(date);
+    setSelectedDayData(dayData);
+    setIsModalOpen(true);
+  };
+
   const renderCalendarDays = () => {
     const days = [];
 
@@ -30,8 +45,8 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
     for (let i = firstDayIndex - 1; i >= 0; i--) {
       const dayNumber = prevMonthLastDay - i;
       days.push(
-        <div key={`prev-${dayNumber}`} className="h-32 p-2 border border-gray-200 bg-gray-50">
-          <div className="text-sm text-gray-500">{dayNumber}</div>
+        <div key={`prev-${dayNumber}`} className="h-32 p-2 border border-gray-200 bg-gray-50/50">
+          <div className="text-sm text-gray-400">{dayNumber}</div>
         </div>
       );
     }
@@ -54,34 +69,69 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
         }
       });
 
+      const dayWorkOrders = workOrders.filter(order => {
+        const orderDate = new Date(order.created_at);
+        return orderDate >= dayDate && orderDate < nextDay;
+      });
+
+      const daySopRecords = sopRecords.filter(record => {
+        const recordDate = new Date(record.created_at);
+        return recordDate >= dayDate && recordDate < nextDay;
+      });
+
+      const onTimeCount = dayCheckins.filter(checkin => 
+        checkin.late_status === 'on_time' || checkin.late_status === 'perfect_on_time'
+      ).length;
+      const lateCount = dayCheckins.filter(checkin => 
+        checkin.late_status === 'late_10' || checkin.late_status === 'late_15'
+      ).length;
+      const totalCheckins = dayCheckins.length;
+      const totalWorkOrders = dayWorkOrders.length;
+      const totalSopRecords = daySopRecords.length;
+
       days.push(
         <div
           key={`current-${i}`}
-          className={`h-32 p-2 border border-gray-200 ${
-            isToday ? 'bg-blue-50' : ''
+          className={`h-24 sm:h-32 p-1 sm:p-2 border border-gray-200 transition-colors duration-150 cursor-pointer hover:bg-gray-50 ${
+            isToday ? 'bg-blue-50/50' : ''
           } ${
-            isWeekend ? 'bg-gray-50' : ''
+            isWeekend ? 'bg-gray-50/50' : ''
           }`}
-        >
-          <div className={`text-sm ${isToday ? 'font-bold text-blue-600' : 'text-gray-700'}`}>{i}</div>
-          {dayCheckins.map(checkin => {
-            const checkinTime = formatTime(checkin.created_at);
-            const employeeName = checkin.employees ? checkin.employees.name : 'Unknown';
-            const statusClass = getStatusClass(checkin.late_status);
-            const status = getStatusText(checkin.late_status);
-            const penalty = checkin.penalty_percentage ? `${checkin.penalty_percentage}%` : '0%';
-            const exemption = checkin.exemption_applied ? 'Yes' : 'No';
-
-            return (
-              <div
-                key={checkin.id}
-                className={`text-xs p-1 mb-1 rounded ${statusClass}`}
-                title={`${employeeName}\nStatus: ${status}\nPenalty: ${penalty}\nExemption: ${exemption}`}
-              >
-                {checkinTime} - {employeeName}
-              </div>
-            );
+          onClick={() => handleDayClick(dayDate, {
+            checkins: dayCheckins,
+            workOrders: dayWorkOrders,
+            sopRecords: daySopRecords
           })}
+        >
+          <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>{i}</div>
+          {(totalCheckins > 0 || totalWorkOrders > 0 || totalSopRecords > 0) && (
+            <div className="mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1">
+              {totalCheckins > 0 && (
+                <div className="text-[10px] sm:text-xs">
+                  {onTimeCount > 0 && (
+                    <span className="text-green-600">
+                      {onTimeCount} on time
+                    </span>
+                  )}
+                  {lateCount > 0 && (
+                    <span className="text-red-600 ml-1">
+                      {lateCount} late
+                    </span>
+                  )}
+                </div>
+              )}
+              {totalWorkOrders > 0 && (
+                <div className="text-[10px] sm:text-xs text-blue-600">
+                  {totalWorkOrders} work order{totalWorkOrders !== 1 ? 's' : ''}
+                </div>
+              )}
+              {totalSopRecords > 0 && (
+                <div className="text-[10px] sm:text-xs text-purple-600">
+                  {totalSopRecords} SOP record{totalSopRecords !== 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -90,8 +140,8 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
     const daysFromNextMonth = 42 - (firstDayIndex + daysInMonth);
     for (let i = 1; i <= daysFromNextMonth; i++) {
       days.push(
-        <div key={`next-${i}`} className="h-32 p-2 border border-gray-200 bg-gray-50">
-          <div className="text-sm text-gray-500">{i}</div>
+        <div key={`next-${i}`} className="h-32 p-2 border border-gray-200 bg-gray-50/50">
+          <div className="text-sm text-gray-400">{i}</div>
         </div>
       );
     }
@@ -100,11 +150,11 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
   };
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
+    <div className="card">
+      <div className="flex items-center justify-between mb-6">
         <button 
           onClick={handlePrevMonth}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="btn btn-secondary flex items-center gap-2"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -114,7 +164,7 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
         <h2 className="text-xl font-semibold text-gray-900">{monthName} {year}</h2>
         <button 
           onClick={handleNextMonth}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="btn btn-secondary flex items-center gap-2"
         >
           Next
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -122,16 +172,23 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
           </svg>
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-px bg-gray-200">
-        <div className="p-2 text-sm font-medium text-center bg-white">Sun</div>
-        <div className="p-2 text-sm font-medium text-center bg-white">Mon</div>
-        <div className="p-2 text-sm font-medium text-center bg-white">Tue</div>
-        <div className="p-2 text-sm font-medium text-center bg-white">Wed</div>
-        <div className="p-2 text-sm font-medium text-center bg-white">Thu</div>
-        <div className="p-2 text-sm font-medium text-center bg-white">Fri</div>
-        <div className="p-2 text-sm font-medium text-center bg-white">Sat</div>
+      <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
+        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Sun</div>
+        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Mon</div>
+        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Tue</div>
+        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Wed</div>
+        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Thu</div>
+        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Fri</div>
+        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Sat</div>
         {renderCalendarDays()}
       </div>
+
+      <DaySummaryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        date={selectedDay}
+        data={selectedDayData}
+      />
     </div>
   );
 }

@@ -70,6 +70,34 @@ export const dataApi = {
     });
     return handleResponse(response);
   },
+
+  fetchWorkOrders: async (startDate, endDate, employeeId = 'all') => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate.toISOString());
+    if (endDate) params.append('end_date', endDate.toISOString());
+    if (employeeId !== 'all') params.append('employee_id', employeeId);
+    params.append('all', 'true'); // Get all work orders for the date range
+
+    const response = await fetch(`/api/work-orders?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse(response);
+    return data.work_orders || [];
+  },
+
+  fetchSopRecords: async (startDate, endDate, employeeId = 'all') => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate.toISOString());
+    if (endDate) params.append('end_date', endDate.toISOString());
+    if (employeeId !== 'all') params.append('employee_id', employeeId);
+    params.append('all', 'true'); // Get all records for the date range
+
+    const response = await fetch(`/api/records?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse(response);
+    return data.records || [];
+  },
 };
 
 // Utility functions
@@ -90,10 +118,10 @@ export function formatTime(date) {
 
 export function getStatusText(lateStatus) {
   switch(lateStatus) {
+    case 'perfect_on_time': return 'Perfect on Time';
     case 'on_time': return 'On Time';
-    case 'late': return 'Late';
-    case 'very_late': return 'Very Late';
-    case 'extremely_late': return 'Extremely Late';
+    case 'late_10': return 'Late (10%)';
+    case 'late_15': return 'Late (15%)';
     default: return 'Unknown';
   }
 }
@@ -102,9 +130,8 @@ export function getStatusClass(lateStatus) {
   switch(lateStatus) {
     case 'perfect_on_time':
     case 'on_time': return 'on-time';
-    case 'late': return 'late';
-    case 'very_late': return 'very-late';
-    case 'extremely_late': return 'extremely-late';
+    case 'late_10': return 'late';
+    case 'late_15': return 'very-late';
     default: return '';
   }
 } 

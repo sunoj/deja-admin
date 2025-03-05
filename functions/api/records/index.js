@@ -1,5 +1,6 @@
 // Cloudflare Worker function to handle records listing with pagination
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminToken } from '../../middleware/auth';
 
 export async function onRequestGet(context) {
   try {
@@ -11,23 +12,44 @@ export async function onRequestGet(context) {
     // Enable CORS
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Employee-ID',
       'Content-Type': 'application/json'
     };
 
-    // Get pagination parameters from query
+    // Get query parameters
     const url = new URL(context.request.url);
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const status = url.searchParams.get('status');
+    const showAll = url.searchParams.get('all') === 'true';
+    const startDate = url.searchParams.get('start_date');
+    const endDate = url.searchParams.get('end_date');
+    const filterEmployeeId = url.searchParams.get('employee_id');
 
     // Get employee_id from request headers
     const employeeId = context.request.headers.get('X-Employee-ID');
+    const authHeader = context.request.headers.get('Authorization');
+
+    // If no employee_id is provided, verify admin token
     if (!employeeId) {
-      return new Response(
-        JSON.stringify({ error: 'Employee ID is required' }),
-        { status: 401, headers: corsHeaders }
-      );
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({ error: 'Admin authentication required' }),
+          { status: 401, headers: corsHeaders }
+        );
+      }
+
+      const token = authHeader.split(' ')[1];
+      
+      try {
+        // Verify admin token using middleware
+        await verifyAdminToken(supabase, token);
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 401, headers: corsHeaders }
+        );
+      }
     }
 
     // Calculate offset based on page and limit
@@ -37,8 +59,26 @@ export async function onRequestGet(context) {
     let query = supabase
       .from('sop_records')
       .select('*, sop_workflows(id, name, description), employees(name)', { count: 'exact' })
-      .gt('completed_items', 0)
-      .eq('employee_id', employeeId); // Filter by current employee
+      .gt('completed_items', 0);
+    
+    // Apply filters based on user type
+    if (employeeId) {
+      // User scenario: only show their own records
+      query = query.eq('employee_id', employeeId);
+    } else {
+      // Admin scenario: can filter by employee if provided
+      if (filterEmployeeId) {
+        query = query.eq('employee_id', filterEmployeeId);
+      }
+    }
+    
+    // Apply date range filter if provided
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
     
     // Apply status filter if provided
     if (status) {
@@ -73,11 +113,11 @@ export async function onRequestGet(context) {
         id: record.sop_workflows.id,
         name: record.sop_workflows.name,
         description: record.sop_workflows.description
+      } : null,
+      employee: record.employees ? {
+        name: record.employees.name
       } : null
     }));
-
-    // Calculate total pages
-    const totalPages = Math.ceil(count / limit);
 
     // Return the records with pagination info
     return new Response(
@@ -87,7 +127,7 @@ export async function onRequestGet(context) {
           total: count,
           page: page,
           limit: limit,
-          pages: totalPages
+          pages: Math.ceil(count / limit)
         }
       }),
       { status: 200, headers: corsHeaders }

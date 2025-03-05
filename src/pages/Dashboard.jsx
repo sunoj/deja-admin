@@ -11,6 +11,8 @@ function Dashboard() {
   const { logout } = useAuth();
   const [view, setView] = useState('calendar');
   const [checkins, setCheckins] = useState([]);
+  const [workOrders, setWorkOrders] = useState([]);
+  const [sopRecords, setSopRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('all');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -21,16 +23,30 @@ function Dashboard() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentDate, selectedEmployee]);
 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const data = await dataApi.fetchCheckins();
-      setCheckins(data);
+      
+      // Calculate date range for the current month
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+
+      const [checkinsData, workOrdersData, sopRecordsData] = await Promise.all([
+        dataApi.fetchCheckins(),
+        dataApi.fetchWorkOrders(startDate, endDate, selectedEmployee),
+        dataApi.fetchSopRecords(startDate, endDate, selectedEmployee)
+      ]);
+      
+      setCheckins(checkinsData);
+      setWorkOrders(workOrdersData);
+      setSopRecords(sopRecordsData);
       
       const uniqueEmployees = Array.from(
-        new Map(data.map(checkin => [checkin.employee_id, checkin.employees]))
+        new Map(checkinsData.map(checkin => [checkin.employee_id, checkin.employees]))
       ).map(([id, employee]) => ({ id, name: employee.name }));
       
       setEmployees(uniqueEmployees);
@@ -174,6 +190,8 @@ function Dashboard() {
               {view === 'calendar' && (
                 <CalendarView
                   checkins={checkins}
+                  workOrders={workOrders}
+                  sopRecords={sopRecords}
                   currentDate={currentDate}
                   selectedEmployee={selectedEmployee}
                   onMonthChange={handleMonthChange}
