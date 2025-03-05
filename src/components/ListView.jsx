@@ -89,28 +89,30 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
   if (sortedData.length === 0) {
     return (
       <div className="card">
-        <div className="flex justify-end p-4">
+        <div className="flex justify-end p-2 sm:p-4">
           <button
             onClick={handleDownload}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm"
+            className="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm"
           >
-            <svg className="w-4 h-4 mr-2" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 12L3 7H6V3H10V7H13L8 12Z" fill="currentColor"/>
               <path d="M2 14H14V12H2V14Z" fill="currentColor"/>
             </svg>
             Download CSV
           </button>
         </div>
-        <div className="table-container">
-          <table className="table">
-            <tbody>
-              <tr>
-                <td colSpan={columns.length} className="px-6 py-4 text-center text-gray-500">
-                  No {selectedBusinessType} records found
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="overflow-x-auto">
+          <div className="min-w-full">
+            <table className="table">
+              <tbody>
+                <tr>
+                  <td colSpan={columns.length} className="px-3 sm:px-6 py-3 sm:py-4 text-center text-gray-500 text-sm">
+                    No {selectedBusinessType} records found
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
@@ -224,37 +226,43 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
 
   return (
     <div className="card">
-      <div className="flex justify-end p-4">
+      <div className="flex justify-end p-2 sm:p-4">
         <button
           onClick={handleDownload}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm"
+          className="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 text-xs sm:text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm"
         >
-          <svg className="w-4 h-4 mr-2" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M8 12L3 7H6V3H10V7H13L8 12Z" fill="currentColor"/>
             <path d="M2 14H14V12H2V14Z" fill="currentColor"/>
           </svg>
           Download CSV
         </button>
       </div>
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              {columns.map(column => (
-                <th key={column.key}>{column.label}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedData.map(item => (
-              <tr key={item.id}>
+      <div className="overflow-x-auto">
+        <div className="min-w-full">
+          <table className="table">
+            <thead>
+              <tr>
                 {columns.map(column => (
-                  <td key={column.key}>{renderCell(item, column)}</td>
+                  <th key={column.key} className="px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm whitespace-nowrap">
+                    {column.label}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sortedData.map(item => (
+                <tr key={item.id}>
+                  {columns.map(column => (
+                    <td key={column.key} className="px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm">
+                      {renderCell(item, column)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
