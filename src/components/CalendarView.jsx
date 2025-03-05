@@ -92,7 +92,7 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
       days.push(
         <div
           key={`current-${i}`}
-          className={`h-24 sm:h-32 p-1 sm:p-2 border border-gray-200 transition-colors duration-150 cursor-pointer hover:bg-gray-50 ${
+          className={`h-20 sm:h-32 p-0.5 sm:p-2 border border-gray-200 transition-colors duration-150 cursor-pointer hover:bg-gray-50 ${
             isToday ? 'bg-blue-50/50' : ''
           } ${
             isWeekend ? 'bg-gray-50/50' : ''
@@ -103,30 +103,30 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
             sopRecords: daySopRecords
           })}
         >
-          <div className={`text-xs sm:text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>{i}</div>
+          <div className={`text-[10px] sm:text-xs font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>{i}</div>
           {(totalCheckins > 0 || totalWorkOrders > 0 || totalSopRecords > 0) && (
-            <div className="mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1">
+            <div className="mt-0.5 space-y-0.5">
               {totalCheckins > 0 && (
-                <div className="text-[10px] sm:text-xs">
+                <div className="text-[8px] sm:text-xs">
                   {onTimeCount > 0 && (
                     <span className="text-green-600">
                       {onTimeCount} on time
                     </span>
                   )}
                   {lateCount > 0 && (
-                    <span className="text-red-600 ml-1">
+                    <span className="text-red-600 ml-0.5 sm:ml-1">
                       {lateCount} late
                     </span>
                   )}
                 </div>
               )}
               {totalWorkOrders > 0 && (
-                <div className="text-[10px] sm:text-xs text-blue-600">
+                <div className="text-[8px] sm:text-xs text-blue-600">
                   {totalWorkOrders} work order{totalWorkOrders !== 1 ? 's' : ''}
                 </div>
               )}
               {totalSopRecords > 0 && (
-                <div className="text-[10px] sm:text-xs text-purple-600">
+                <div className="text-[8px] sm:text-xs text-purple-600">
                   {totalSopRecords} SOP record{totalSopRecords !== 1 ? 's' : ''}
                 </div>
               )}
@@ -151,35 +151,35 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
 
   return (
     <div className="card">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-2 sm:mb-6">
         <button 
           onClick={handlePrevMonth}
-          className="btn btn-secondary flex items-center gap-2"
+          className="btn btn-secondary flex items-center gap-0.5 sm:gap-2 text-xs sm:text-base px-1.5 sm:px-3"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="12" height="12" className="sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          Previous
+          <span className="hidden sm:inline">Previous</span>
         </button>
-        <h2 className="text-xl font-semibold text-gray-900">{monthName} {year}</h2>
+        <h2 className="text-sm sm:text-xl font-semibold text-gray-900">{monthName} {year}</h2>
         <button 
           onClick={handleNextMonth}
-          className="btn btn-secondary flex items-center gap-2"
+          className="btn btn-secondary flex items-center gap-0.5 sm:gap-2 text-xs sm:text-base px-1.5 sm:px-3"
         >
-          Next
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <span className="hidden sm:inline">Next</span>
+          <svg width="12" height="12" className="sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
-        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Sun</div>
-        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Mon</div>
-        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Tue</div>
-        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Wed</div>
-        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Thu</div>
-        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Fri</div>
-        <div className="p-1 sm:p-2 text-xs sm:text-sm font-medium text-center bg-white text-gray-600">Sat</div>
+      <div className="grid grid-cols-7 gap-[1px] bg-gray-200 rounded-lg overflow-hidden">
+        <div className="p-0.5 sm:p-1 text-[10px] sm:text-xs font-medium text-center bg-white text-gray-600">S</div>
+        <div className="p-0.5 sm:p-1 text-[10px] sm:text-xs font-medium text-center bg-white text-gray-600">M</div>
+        <div className="p-0.5 sm:p-1 text-[10px] sm:text-xs font-medium text-center bg-white text-gray-600">T</div>
+        <div className="p-0.5 sm:p-1 text-[10px] sm:text-xs font-medium text-center bg-white text-gray-600">W</div>
+        <div className="p-0.5 sm:p-1 text-[10px] sm:text-xs font-medium text-center bg-white text-gray-600">T</div>
+        <div className="p-0.5 sm:p-1 text-[10px] sm:text-xs font-medium text-center bg-white text-gray-600">F</div>
+        <div className="p-0.5 sm:p-1 text-[10px] sm:text-xs font-medium text-center bg-white text-gray-600">S</div>
         {renderCalendarDays()}
       </div>
 

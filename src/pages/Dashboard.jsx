@@ -77,28 +77,16 @@ function Dashboard() {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 className="text-2xl font-bold text-gray-900">DEJA Admin Dashboard</h1>
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-              <button
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  view === 'calendar'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-                onClick={() => setView('calendar')}
-              >
-                Calendar View
-              </button>
-              <button
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  view === 'list'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-                onClick={() => setView('list')}
-              >
-                List View
-              </button>
-            </div>
+            <button
+              onClick={logout}
+              className="inline-flex items-center px-1.5 py-0.5 text-[10px] text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200"
+            >
+              <svg className="w-2.5 h-2.5 mr-0.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 14H2V2H6V3H3V13H5V3H6V14Z" fill="currentColor"/>
+                <path d="M11 8L7 4V7H4V9H7V12L11 8Z" fill="currentColor"/>
+              </svg>
+              Logout
+            </button>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -108,6 +96,28 @@ function Dashboard() {
                 selectedEmployee={selectedEmployee}
                 onChange={handleEmployeeChange}
               />
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                <button
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    view === 'calendar'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setView('calendar')}
+                >
+                  Calendar View
+                </button>
+                <button
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    view === 'list'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setView('list')}
+                >
+                  List View
+                </button>
+              </div>
               {view === 'list' && (
                 <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
                   <button
@@ -142,18 +152,6 @@ function Dashboard() {
                   </button>
                 </div>
               )}
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={logout}
-                className="inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 shadow-sm"
-              >
-                <svg className="w-4 h-4 mr-2" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 14H2V2H6V3H3V13H5V3H6V14Z" fill="currentColor"/>
-                  <path d="M11 8L7 4V7H4V9H7V12L11 8Z" fill="currentColor"/>
-                </svg>
-                Logout
-              </button>
             </div>
           </div>
 
