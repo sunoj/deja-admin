@@ -1,16 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { onRequest as authMiddleware } from '../../middleware/auth.js';
 
-export async function onRequest(context, next) {
+export async function onRequest(context) {
   // First check authentication
-  const authResponse = await authMiddleware(context, next);
-  if (authResponse.status !== 200) {
-    return authResponse;
+  const authResult = await authMiddleware(context);
+  if (authResult !== true) {
+    return authResult;
   }
 
   try {
     // Initialize Supabase client
-    const supabaseUrl = 'https://vncgcucejpmwpjcxdwhd.supabase.co';
+    const supabaseUrl = context.env.SUPABASE_URL;
     const supabaseKey = context.env.SUPABASE_KEY;
     const supabase = createClient(supabaseUrl, supabaseKey);
     
