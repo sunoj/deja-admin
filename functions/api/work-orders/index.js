@@ -42,7 +42,7 @@ export async function onRequestGet(context) {
       
       try {
         // Verify admin token using middleware
-        await verifyAdminToken(supabase, token);
+        await verifyAdminToken(token, supabase);
       } catch (error) {
         return new Response(
           JSON.stringify({ error: error.message }),

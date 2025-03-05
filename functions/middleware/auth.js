@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-async function verifyToken(token, supabase) {
+export async function verifyAdminToken(token, supabase) {
   try {
     console.log('Verifying token:', token);
     
@@ -123,7 +123,7 @@ export async function onRequest(context) {
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Verify token
-    const admin = await verifyToken(token, supabase);
+    const admin = await verifyAdminToken(token, supabase);
     
     // Add admin ID to request context
     context.adminId = admin.id;

@@ -117,9 +117,16 @@ function DaySummaryModal({ isOpen, onClose, date, data }) {
                   >
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
                       <div>
-                        <div className="font-medium text-sm sm:text-base text-gray-900">{record.workflow_name}</div>
+                        <a 
+                          href={`https://sop.nothingtodo.me/record/${record.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-sm sm:text-base text-blue-600 hover:text-blue-800"
+                        >
+                          {record.workflow.name || 'Untitled Record'}
+                        </a>
                         <div className="text-xs sm:text-sm text-gray-600">
-                          {record.employees?.name || 'Unknown'}
+                          By: {record.employee?.name || 'Unknown'}
                         </div>
                       </div>
                       <div className="sm:text-right">
