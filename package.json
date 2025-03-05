@@ -1,0 +1,30 @@
+{
+  "name": "work-order-system",
+  "version": "1.0.0",
+  "description": "Simple work order system",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "build:watch": "vite build --watch",
+    "dev": "yarn build:watch & wrangler pages dev --port 8788  --compatibility-date=2024-03-05",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "wrangler pages deploy ./dist"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.30.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.4",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "vite": "^6.2.0",
+    "wrangler": "^3.22.1"
+  }
+}
