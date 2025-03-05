@@ -20,6 +20,7 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [ipInfo, setIpInfo] = useState(null);
   const [showIpModal, setShowIpModal] = useState(false);
+  const [selectedBusinessType, setSelectedBusinessType] = useState('checkins');
 
   useEffect(() => {
     loadData();
@@ -65,62 +66,6 @@ function Dashboard() {
     setCurrentDate(date);
   };
 
-  const handleDownload = () => {
-    const filteredCheckins = selectedEmployee === 'all'
-      ? checkins
-      : checkins.filter(checkin => checkin.employee_id === selectedEmployee);
-
-    if (filteredCheckins.length === 0) {
-      alert('No check-in data to download');
-      return;
-    }
-
-    const headers = [
-      'Date',
-      'Time',
-      'Employee',
-      'Status',
-      'Penalty',
-      'Exemption',
-      'Meal Allowance',
-      'IP Address'
-    ];
-
-    const csvData = filteredCheckins.map(checkin => {
-      const checkinDate = new Date(checkin.created_at);
-      const employeeName = checkin.employees ? checkin.employees.name : 'Unknown';
-      const status = getStatusText(checkin.late_status);
-      const penalty = checkin.penalty_percentage ? `${checkin.penalty_percentage}%` : '-';
-      const exemption = checkin.exemption_applied ? 'Yes' : 'No';
-      const mealAllowance = checkin.meal_allowance ? 'Yes' : 'No';
-
-      return [
-        formatDate(checkinDate),
-        formatTime(checkinDate),
-        employeeName,
-        status,
-        penalty,
-        exemption,
-        mealAllowance,
-        checkin.ip_address || '-'
-      ];
-    });
-
-    const csvContent = [headers].concat(csvData)
-      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `checkins_${new Date().toISOString().slice(0, 10)}.csv`);
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handleIpClick = (ipInfo) => {
     setIpInfo(ipInfo);
     setShowIpModal(true);
@@ -132,22 +77,22 @@ function Dashboard() {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 className="text-2xl font-bold text-gray-900">DEJA Admin Dashboard</h1>
-            <div className="flex space-x-2">
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
               <button
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   view === 'calendar'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
                 onClick={() => setView('calendar')}
               >
                 Calendar View
               </button>
               <button
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   view === 'list'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
                 onClick={() => setView('list')}
               >
@@ -157,16 +102,51 @@ function Dashboard() {
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <EmployeeFilter
-              employees={employees}
-              selectedEmployee={selectedEmployee}
-              onChange={handleEmployeeChange}
-            />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <EmployeeFilter
+                employees={employees}
+                selectedEmployee={selectedEmployee}
+                onChange={handleEmployeeChange}
+              />
+              {view === 'list' && (
+                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      selectedBusinessType === 'checkins'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setSelectedBusinessType('checkins')}
+                  >
+                    Check-ins
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      selectedBusinessType === 'workOrders'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setSelectedBusinessType('workOrders')}
+                  >
+                    Work Orders
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      selectedBusinessType === 'sopRecords'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setSelectedBusinessType('sopRecords')}
+                  >
+                    SOP Records
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="flex space-x-2">
-              <DownloadButton onClick={handleDownload} />
               <button
                 onClick={logout}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 shadow-sm"
+                className="inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 shadow-sm"
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M6 14H2V2H6V3H3V13H5V3H6V14Z" fill="currentColor"/>
@@ -200,7 +180,10 @@ function Dashboard() {
               {view === 'list' && (
                 <ListView
                   checkins={checkins}
+                  workOrders={workOrders}
+                  sopRecords={sopRecords}
                   selectedEmployee={selectedEmployee}
+                  selectedBusinessType={selectedBusinessType}
                   onIpClick={handleIpClick}
                 />
               )}
