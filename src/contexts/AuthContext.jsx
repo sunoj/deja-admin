@@ -47,12 +47,30 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const register = async (username, password, confirmPassword) => {
+    try {
+      if (password !== confirmPassword) {
+        return { success: false, error: 'Passwords do not match' };
+      }
+      const data = await authApi.register(username, password);
+      if (data.success) {
+        setIsAuthenticated(true);
+        return { success: true };
+      } else {
+        return { success: false, error: data.error };
+      }
+    } catch (error) {
+      console.error('Registration failed:', error);
+      return { success: false, error: 'Registration failed' };
+    }
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

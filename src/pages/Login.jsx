@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [allowRegistration, setAllowRegistration] = useState(false);
+  const { login, register } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if registration is allowed
+    fetch('/api/auth/check-registration')
+      .then(response => response.json())
+      .then(data => {
+        setAllowRegistration(data.allowRegistration);
+      })
+      .catch(error => {
+        console.error('Failed to check registration status:', error);
+        setAllowRegistration(false);
+      });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,14 +32,17 @@ function Login() {
     setIsLoading(true);
 
     try {
-      const result = await login(username, password);
+      const result = isRegistering
+        ? await register(username, password, confirmPassword)
+        : await login(username, password);
+
       if (result.success) {
         navigate('/');
       } else {
         setError(result.error || 'Invalid credentials');
       }
     } catch (error) {
-      setError('An error occurred during login');
+      setError('An error occurred during authentication');
     } finally {
       setIsLoading(false);
     }
@@ -34,7 +53,7 @@ function Login() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            DEJA Admin Login
+            DEJA Admin {isRegistering ? 'Register' : 'Login'}
           </h2>
         </div>
         {error && (
@@ -64,12 +83,27 @@ function Login() {
                 name="password"
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+            {isRegistering && (
+              <div>
+                <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <div>
@@ -84,14 +118,26 @@ function Login() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Logging in...
+                  {isRegistering ? 'Registering...' : 'Logging in...'}
                 </div>
               ) : (
-                'Login'
+                isRegistering ? 'Register' : 'Login'
               )}
             </button>
           </div>
         </form>
+
+        {allowRegistration && (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsRegistering(!isRegistering)}
+              className="text-sm text-indigo-600 hover:text-indigo-500"
+            >
+              {isRegistering ? 'Already have an account? Login' : "Don't have an account? Register"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
