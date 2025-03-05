@@ -30,8 +30,8 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
     for (let i = firstDayIndex - 1; i >= 0; i--) {
       const dayNumber = prevMonthLastDay - i;
       days.push(
-        <div key={`prev-${dayNumber}`} className="calendar-day other-month">
-          <div className="calendar-day-number">{dayNumber}</div>
+        <div key={`prev-${dayNumber}`} className="h-32 p-2 border border-gray-200 bg-gray-50">
+          <div className="text-sm text-gray-500">{dayNumber}</div>
         </div>
       );
     }
@@ -57,9 +57,13 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
       days.push(
         <div
           key={`current-${i}`}
-          className={`calendar-day ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}`}
+          className={`h-32 p-2 border border-gray-200 ${
+            isToday ? 'bg-blue-50' : ''
+          } ${
+            isWeekend ? 'bg-gray-50' : ''
+          }`}
         >
-          <div className="calendar-day-number">{i}</div>
+          <div className={`text-sm ${isToday ? 'font-bold text-blue-600' : 'text-gray-700'}`}>{i}</div>
           {dayCheckins.map(checkin => {
             const checkinTime = formatTime(checkin.created_at);
             const employeeName = checkin.employees ? checkin.employees.name : 'Unknown';
@@ -71,7 +75,7 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
             return (
               <div
                 key={checkin.id}
-                className={`checkin-entry ${statusClass}`}
+                className={`text-xs p-1 mb-1 rounded ${statusClass}`}
                 title={`${employeeName}\nStatus: ${status}\nPenalty: ${penalty}\nExemption: ${exemption}`}
               >
                 {checkinTime} - {employeeName}
@@ -86,8 +90,8 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
     const daysFromNextMonth = 42 - (firstDayIndex + daysInMonth);
     for (let i = 1; i <= daysFromNextMonth; i++) {
       days.push(
-        <div key={`next-${i}`} className="calendar-day other-month">
-          <div className="calendar-day-number">{i}</div>
+        <div key={`next-${i}`} className="h-32 p-2 border border-gray-200 bg-gray-50">
+          <div className="text-sm text-gray-500">{i}</div>
         </div>
       );
     }
@@ -96,30 +100,36 @@ function CalendarView({ checkins, currentDate, selectedEmployee, onMonthChange }
   };
 
   return (
-    <div className="calendar-view active">
-      <div className="calendar-header">
-        <button onClick={handlePrevMonth}>
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-4">
+        <button 
+          onClick={handlePrevMonth}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Previous
         </button>
-        <h2>{monthName} {year}</h2>
-        <button onClick={handleNextMonth}>
+        <h2 className="text-xl font-semibold text-gray-900">{monthName} {year}</h2>
+        <button 
+          onClick={handleNextMonth}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        >
           Next
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
       </div>
-      <div className="calendar">
-        <div className="calendar-day-header">Sun</div>
-        <div className="calendar-day-header">Mon</div>
-        <div className="calendar-day-header">Tue</div>
-        <div className="calendar-day-header">Wed</div>
-        <div className="calendar-day-header">Thu</div>
-        <div className="calendar-day-header">Fri</div>
-        <div className="calendar-day-header">Sat</div>
+      <div className="grid grid-cols-7 gap-px bg-gray-200">
+        <div className="p-2 text-sm font-medium text-center bg-white">Sun</div>
+        <div className="p-2 text-sm font-medium text-center bg-white">Mon</div>
+        <div className="p-2 text-sm font-medium text-center bg-white">Tue</div>
+        <div className="p-2 text-sm font-medium text-center bg-white">Wed</div>
+        <div className="p-2 text-sm font-medium text-center bg-white">Thu</div>
+        <div className="p-2 text-sm font-medium text-center bg-white">Fri</div>
+        <div className="p-2 text-sm font-medium text-center bg-white">Sat</div>
         {renderCalendarDays()}
       </div>
     </div>

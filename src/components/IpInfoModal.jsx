@@ -4,66 +4,80 @@ function IpInfoModal({ ipInfo, isOpen, onClose }) {
   if (!isOpen || !ipInfo) return null;
 
   return (
-    <div className="ip-info-modal active" onClick={onClose}>
-      <div className="ip-info-modal-content" onClick={e => e.stopPropagation()}>
-        <div className="ip-info-modal-header">
-          <h3 className="ip-info-modal-title">IP Address Information</h3>
-          <button className="ip-info-modal-close" onClick={onClose}>&times;</button>
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4" 
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">IP Address Information</h3>
+          <button 
+            className="text-gray-400 hover:text-gray-500 focus:outline-none"
+            onClick={onClose}
+          >
+            <span className="sr-only">Close</span>
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <div className="ip-info-modal-body">
-          <div className="ip-info-item">
-            <div className="ip-info-label">IP Address</div>
-            <div className="ip-info-value">{ipInfo.ip || 'Unknown'}</div>
+        <div className="p-4 space-y-4">
+          <div className="flex flex-col">
+            <div className="text-sm font-medium text-gray-500">IP Address</div>
+            <div className="mt-1 text-sm text-gray-900">{ipInfo.ip || 'Unknown'}</div>
           </div>
           
           {ipInfo.hostname && (
-            <div className="ip-info-item">
-              <div className="ip-info-label">Hostname</div>
-              <div className="ip-info-value">{ipInfo.hostname}</div>
+            <div className="flex flex-col">
+              <div className="text-sm font-medium text-gray-500">Hostname</div>
+              <div className="mt-1 text-sm text-gray-900">{ipInfo.hostname}</div>
             </div>
           )}
           
           {(ipInfo.city || ipInfo.region) && (
-            <div className="ip-info-item">
-              <div className="ip-info-label">Location</div>
-              <div className="ip-info-value">
+            <div className="flex flex-col">
+              <div className="text-sm font-medium text-gray-500">Location</div>
+              <div className="mt-1 text-sm text-gray-900">
                 {ipInfo.city || ''} {ipInfo.region ? (ipInfo.city ? ', ' + ipInfo.region : ipInfo.region) : ''}
               </div>
             </div>
           )}
           
           {ipInfo.country && (
-            <div className="ip-info-item">
-              <div className="ip-info-label">Country</div>
-              <div className="ip-info-value">{ipInfo.country}</div>
+            <div className="flex flex-col">
+              <div className="text-sm font-medium text-gray-500">Country</div>
+              <div className="mt-1 text-sm text-gray-900">{ipInfo.country}</div>
             </div>
           )}
           
           {ipInfo.postal && (
-            <div className="ip-info-item">
-              <div className="ip-info-label">Postal Code</div>
-              <div className="ip-info-value">{ipInfo.postal}</div>
+            <div className="flex flex-col">
+              <div className="text-sm font-medium text-gray-500">Postal Code</div>
+              <div className="mt-1 text-sm text-gray-900">{ipInfo.postal}</div>
             </div>
           )}
           
           {ipInfo.loc && (
-            <div className="ip-info-item">
-              <div className="ip-info-label">Coordinates</div>
-              <div className="ip-info-value">{ipInfo.loc}</div>
+            <div className="flex flex-col">
+              <div className="text-sm font-medium text-gray-500">Coordinates</div>
+              <div className="mt-1 text-sm text-gray-900">{ipInfo.loc}</div>
             </div>
           )}
           
           {ipInfo.org && (
-            <div className="ip-info-item">
-              <div className="ip-info-label">ISP/Organization</div>
-              <div className="ip-info-value">{ipInfo.org}</div>
+            <div className="flex flex-col">
+              <div className="text-sm font-medium text-gray-500">ISP/Organization</div>
+              <div className="mt-1 text-sm text-gray-900">{ipInfo.org}</div>
             </div>
           )}
           
           {ipInfo.timezone && (
-            <div className="ip-info-item">
-              <div className="ip-info-label">Timezone</div>
-              <div className="ip-info-value">{ipInfo.timezone}</div>
+            <div className="flex flex-col">
+              <div className="text-sm font-medium text-gray-500">Timezone</div>
+              <div className="mt-1 text-sm text-gray-900">{ipInfo.timezone}</div>
             </div>
           )}
         </div>

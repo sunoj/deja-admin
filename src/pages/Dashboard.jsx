@@ -29,7 +29,6 @@ function Dashboard() {
       const data = await dataApi.fetchCheckins();
       setCheckins(data);
       
-      // Extract unique employees
       const uniqueEmployees = Array.from(
         new Map(data.map(checkin => [checkin.employee_id, checkin.employees]))
       ).map(([id, employee]) => ({ id, name: employee.name }));
@@ -112,27 +111,27 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">DEJA Admin Dashboard</h1>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">DEJA Admin Dashboard</h1>
             <div className="flex space-x-2">
               <button
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                   view === 'calendar'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
                 onClick={() => setView('calendar')}
               >
                 Calendar View
               </button>
               <button
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                   view === 'list'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                 }`}
                 onClick={() => setView('list')}
               >
@@ -141,7 +140,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <EmployeeFilter
               employees={employees}
               selectedEmployee={selectedEmployee}
@@ -151,7 +150,7 @@ function Dashboard() {
               <DownloadButton onClick={handleDownload} />
               <button
                 onClick={logout}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 shadow-sm"
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M6 14H2V2H6V3H3V13H5V3H6V14Z" fill="currentColor"/>
@@ -164,14 +163,14 @@ function Dashboard() {
 
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative shadow-sm" role="alert">
               <span className="block sm:inline">{error}</span>
             </div>
           ) : (
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white shadow-lg rounded-xl overflow-hidden">
               {view === 'calendar' && (
                 <CalendarView
                   checkins={checkins}
