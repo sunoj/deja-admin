@@ -6,6 +6,7 @@ import EmployeeFilter from '../components/EmployeeFilter';
 import DownloadButton from '../components/DownloadButton';
 import IpInfoModal from '../components/IpInfoModal';
 import { dataApi } from '../services/api';
+import { Link } from 'react-router-dom';
 
 function Dashboard() {
   const { logout } = useAuth();
@@ -77,16 +78,27 @@ function Dashboard() {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h1 className="text-2xl font-bold text-gray-900">DEJA Admin Dashboard</h1>
-            <button
-              onClick={logout}
-              className="inline-flex items-center px-1.5 py-0.5 text-[10px] text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200"
-            >
-              <svg className="w-2.5 h-2.5 mr-0.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 14H2V2H6V3H3V13H5V3H6V14Z" fill="currentColor"/>
-                <path d="M11 8L7 4V7H4V9H7V12L11 8Z" fill="currentColor"/>
-              </svg>
-              Logout
-            </button>
+            <div className="flex items-center space-x-4">
+              <Link
+                to="/proposals"
+                className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Voting Platform
+              </Link>
+              <button
+                onClick={logout}
+                className="inline-flex items-center px-1.5 py-0.5 text-[10px] text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200"
+              >
+                <svg className="w-2.5 h-2.5 mr-0.5" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 14H2V2H6V3H3V13H5V3H6V14Z" fill="currentColor"/>
+                  <path d="M11 8L7 4V7H4V9H7V12L11 8Z" fill="currentColor"/>
+                </svg>
+                Logout
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
