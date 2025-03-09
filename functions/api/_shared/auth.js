@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
 export const getSupabaseClient = (env) => {
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!env.SUPABASE_URL || !env.SUPABASE_KEY) {
     throw new Error('Missing Supabase environment variables');
   }
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  return createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
 };
 
 export const getUser = async (request, env) => {

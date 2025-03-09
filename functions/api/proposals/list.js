@@ -1,13 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient, withAuth } from '../_shared/auth';
 import { corsHeaders } from '../_shared/cors';
 
-export async function onRequestGet({ request, env }) {
+async function handleListProposals(context) {
+  const { request, env } = context;
+
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = getSupabaseClient(env);
     const url = new URL(request.url);
     const status = url.searchParams.get('status') || 'active';
 
@@ -16,9 +18,9 @@ export async function onRequestGet({ request, env }) {
       .select(`
         *,
         created_by:auth.users!created_by(id, email),
-        versions:proposal_versions(count),
-        comments:proposal_comments(count),
-        votes:proposal_votes(count)
+        versions:proposal_versions!proposal_id(count(*)),
+        comments:proposal_comments!proposal_id(count(*)),
+        votes:proposal_votes!proposal_id(count(*))
       `)
       .eq('status', status)
       .order('created_at', { ascending: false });
@@ -44,4 +46,6 @@ export async function onRequestGet({ request, env }) {
       }
     );
   }
-} 
+}
+
+export const onRequestGet = withAuth(handleListProposals); 

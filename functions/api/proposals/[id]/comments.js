@@ -1,14 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient, withAuth } from '../../_shared/auth';
 import { corsHeaders } from '../../_shared/cors';
-import { getUser } from '../../_shared/auth';
 
-export async function onRequestGet({ request, env, params }) {
+async function handleGetComments(context) {
+  const { request, env, params } = context;
+
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = getSupabaseClient(env);
     const { id } = params;
 
     const { data: comments, error } = await supabase
@@ -43,27 +44,15 @@ export async function onRequestGet({ request, env, params }) {
   }
 }
 
-export async function onRequestPost({ request, env, params }) {
+async function handleAddComment(context) {
+  const { request, env, params, user } = context;
+
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const user = await getUser(request, env);
-    if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = getSupabaseClient(env);
     const { id } = params;
     const { content, parentId } = await request.json();
 
@@ -117,4 +106,7 @@ export async function onRequestPost({ request, env, params }) {
       }
     );
   }
-} 
+}
+
+export const onRequestGet = handleGetComments;
+export const onRequestPost = withAuth(handleAddComment); 

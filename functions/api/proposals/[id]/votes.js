@@ -1,14 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient, withAuth } from '../../_shared/auth';
 import { corsHeaders } from '../../_shared/cors';
-import { getUser } from '../../_shared/auth';
 
-export async function onRequestGet({ request, env, params }) {
+async function handleGetVotes(context) {
+  const { request, env, params } = context;
+
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = getSupabaseClient(env);
     const { id } = params;
 
     const { data: votes, error } = await supabase
@@ -51,27 +52,15 @@ export async function onRequestGet({ request, env, params }) {
   }
 }
 
-export async function onRequestPost({ request, env, params }) {
+async function handleCastVote(context) {
+  const { request, env, params, user } = context;
+
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const user = await getUser(request, env);
-    if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = getSupabaseClient(env);
     const { id } = params;
     const { support, reason } = await request.json();
 
@@ -126,7 +115,7 @@ export async function onRequestPost({ request, env, params }) {
       );
     }
 
-    // Get user's voting power (implement your logic here)
+    // Get user's voting power
     const votingPower = await calculateUserVotingPower(user.id);
 
     // Upsert vote
@@ -174,4 +163,7 @@ async function calculateUserVotingPower(userId) {
   // Implement your voting power calculation logic here
   // This could be based on token holdings, reputation, etc.
   return 1; // Default voting power
-} 
+}
+
+export const onRequestGet = handleGetVotes;
+export const onRequestPost = withAuth(handleCastVote); 

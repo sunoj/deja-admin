@@ -1,14 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient, withAuth } from '../_shared/auth';
 import { corsHeaders } from '../_shared/cors';
-import { getUser } from '../_shared/auth';
 
-export async function onRequestGet({ request, env, params }) {
+async function handleGetProposal(context) {
+  const { request, env, params } = context;
+  
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = getSupabaseClient(env);
     const { id } = params;
 
     const { data: proposal, error } = await supabase
@@ -60,27 +61,15 @@ export async function onRequestGet({ request, env, params }) {
   }
 }
 
-export async function onRequestPut({ request, env, params }) {
+async function handleUpdateProposal(context) {
+  const { request, env, params, user } = context;
+
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const user = await getUser(request, env);
-    if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = getSupabaseClient(env);
     const { id } = params;
     const { title, content, status, votingStartDate, votingEndDate, changeLog } = await request.json();
 
@@ -173,4 +162,7 @@ export async function onRequestPut({ request, env, params }) {
       }
     );
   }
-} 
+}
+
+export const onRequestGet = handleGetProposal;
+export const onRequestPut = withAuth(handleUpdateProposal); 

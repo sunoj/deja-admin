@@ -1,13 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '../../_shared/auth';
 import { corsHeaders } from '../../_shared/cors';
 
-export async function onRequestGet({ request, env, params }) {
+async function handleGetVersions(context) {
+  const { request, env, params } = context;
+
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = getSupabaseClient(env);
     const { id } = params;
 
     const { data: versions, error } = await supabase
@@ -40,4 +42,6 @@ export async function onRequestGet({ request, env, params }) {
       }
     );
   }
-} 
+}
+
+export const onRequestGet = handleGetVersions; 

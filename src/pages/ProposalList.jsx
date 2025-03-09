@@ -19,9 +19,10 @@ const ProposalList = () => {
       setLoading(true);
       setError(null);
       const data = await votingPlatformService.getProposals(activeTab);
-      setProposals(data);
+      setProposals(Array.isArray(data) ? data : []);
     } catch (error) {
       setError(error.response?.data?.error || 'Failed to fetch proposals');
+      setProposals([]);
     } finally {
       setLoading(false);
     }
