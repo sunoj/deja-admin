@@ -16,7 +16,7 @@ async function handleGetComments(context) {
       .from('proposal_comments')
       .select(`
         *,
-        author:auth.users!author_id(id, email)
+        author:admins!author_id(id, username)
       `)
       .eq('proposal_id', id)
       .order('created_at', { ascending: false });
@@ -80,7 +80,7 @@ async function handleAddComment(context) {
       })
       .select(`
         *,
-        author:auth.users!author_id(id, email)
+        author:admins!author_id(id, username)
       `)
       .single();
 

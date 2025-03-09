@@ -36,6 +36,17 @@ async function verifyToken(token, supabase) {
       throw new Error('Token expired');
     }
     
+    // Verify admin exists in admins table
+    const { data: adminData, error: adminError } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('id', tokenData.admin.id)
+      .single();
+    
+    if (adminError || !adminData) {
+      throw new Error('Admin not found');
+    }
+    
     // Update last used time
     await supabase
       .from('admin_tokens')

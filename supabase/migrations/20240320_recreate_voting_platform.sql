@@ -123,15 +123,9 @@ CREATE POLICY "Versions are viewable by all admins"
     ON proposal_versions FOR SELECT
     USING (true);
 
-CREATE POLICY "Versions can be created by proposal creators"
+CREATE POLICY "Versions can be created by any admin"
     ON proposal_versions FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM proposals 
-            WHERE id = proposal_id 
-            AND created_by = auth.uid()
-        )
-    );
+    WITH CHECK (true);
 
 -- Comments policies
 CREATE POLICY "Comments are viewable by all admins"

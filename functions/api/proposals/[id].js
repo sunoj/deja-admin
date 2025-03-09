@@ -16,7 +16,7 @@ async function handleGetProposal(context) {
       .from('proposals')
       .select(`
         *,
-        created_by:auth.users!created_by(id, email),
+        created_by_admin:admins!created_by(id, username),
         versions:proposal_versions(count),
         comments:proposal_comments(count),
         votes:proposal_votes(count)

@@ -16,7 +16,7 @@ async function handleGetVersions(context) {
       .from('proposal_versions')
       .select(`
         *,
-        created_by:auth.users!created_by(id, email)
+        created_by_admin:admins!created_by(id, username)
       `)
       .eq('proposal_id', id)
       .order('version_number', { ascending: false });

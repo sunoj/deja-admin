@@ -130,7 +130,7 @@ async function handleCastVote(context) {
       })
       .select(`
         *,
-        voter:auth.users!voter_id(id, email)
+        voter:admins!voter_id(id, username)
       `)
       .single();
 
