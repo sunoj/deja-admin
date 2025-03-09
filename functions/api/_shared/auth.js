@@ -7,6 +7,47 @@ export const getSupabaseClient = (env) => {
   return createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
 };
 
+async function verifyToken(token, supabase) {
+  try {
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('admin_tokens')
+      .select(`
+        *,
+        admin:admin_id (
+          id,
+          username
+        )
+      `)
+      .eq('token', token)
+      .single();
+    
+    if (tokenError || !tokenData) {
+      throw new Error('Invalid token');
+    }
+    
+    // Check if token is expired
+    const expiresAt = new Date(tokenData.expires_at);
+    if (expiresAt < new Date()) {
+      // Delete expired token
+      await supabase
+        .from('admin_tokens')
+        .delete()
+        .eq('id', tokenData.id);
+      throw new Error('Token expired');
+    }
+    
+    // Update last used time
+    await supabase
+      .from('admin_tokens')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('id', tokenData.id);
+    
+    return tokenData.admin;
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
+}
+
 export const getUser = async (request, env) => {
   const authHeader = request.headers.get('Authorization');
   
@@ -22,17 +63,13 @@ export const getUser = async (request, env) => {
 
   try {
     const supabase = getSupabaseClient(env);
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const admin = await verifyToken(token, supabase);
     
-    if (error) {
-      throw error;
+    if (!admin) {
+      throw new Error('Admin not found');
     }
 
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    return user;
+    return admin;
   } catch (error) {
     console.error('Auth error:', error);
     throw new Error('Invalid token');
@@ -53,7 +90,8 @@ export const handleAuth = async (request, env) => {
         {
           status: 401,
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
           }
         }
       ),
@@ -84,7 +122,7 @@ export const withAuth = (handler) => {
       return authResult.response;
     }
 
-    // Add authenticated user to context
+    // Add authenticated admin to context
     context.user = authResult;
     
     // Call the original handler

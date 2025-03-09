@@ -13,19 +13,36 @@ async function handleListProposals(context) {
     const url = new URL(request.url);
     const status = url.searchParams.get('status') || 'active';
 
-    const { data: proposals, error } = await supabase
+    // Get proposals with creator info
+    const { data: proposals, error: proposalsError } = await supabase
       .from('proposals')
       .select(`
         *,
-        created_by:auth.users!created_by(id, email),
-        versions:proposal_versions!proposal_id(count(*)),
-        comments:proposal_comments!proposal_id(count(*)),
-        votes:proposal_votes!proposal_id(count(*))
+        created_by_admin:admins!created_by(id, username)
       `)
       .eq('status', status)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (proposalsError) throw proposalsError;
+
+    // Get counts for each proposal
+    if (proposals && proposals.length > 0) {
+      const proposalIds = proposals.map(p => p.id);
+
+      // Get counts for each proposal individually to maintain the relationship
+      const [versionsData, commentsData, votesData] = await Promise.all([
+        supabase.from('proposal_versions').select('proposal_id').in('proposal_id', proposalIds),
+        supabase.from('proposal_comments').select('proposal_id').in('proposal_id', proposalIds),
+        supabase.from('proposal_votes').select('proposal_id').in('proposal_id', proposalIds)
+      ]);
+
+      // Calculate counts for each proposal
+      proposals.forEach(proposal => {
+        proposal.versions_count = versionsData.data?.filter(v => v.proposal_id === proposal.id).length || 0;
+        proposal.comments_count = commentsData.data?.filter(c => c.proposal_id === proposal.id).length || 0;
+        proposal.votes_count = votesData.data?.filter(v => v.proposal_id === proposal.id).length || 0;
+      });
+    }
 
     return new Response(JSON.stringify(proposals), {
       headers: {
@@ -36,7 +53,10 @@ async function handleListProposals(context) {
   } catch (error) {
     console.error('Error fetching proposals:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to fetch proposals' }),
+      JSON.stringify({ 
+        error: 'Failed to fetch proposals',
+        details: error.message
+      }),
       {
         status: 500,
         headers: {
