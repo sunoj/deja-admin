@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { votingPlatformService } from '../services/votingPlatform';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorMessage from '../components/ErrorMessage';
 
 const ProposalList = () => {
   const [proposals, setProposals] = useState([]);
   const [activeTab, setActiveTab] = useState('active');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchProposals();
@@ -14,10 +17,11 @@ const ProposalList = () => {
   const fetchProposals = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await votingPlatformService.getProposals(activeTab);
       setProposals(data);
     } catch (error) {
-      console.error('Error fetching proposals:', error);
+      setError(error.response?.data?.error || 'Failed to fetch proposals');
     } finally {
       setLoading(false);
     }
@@ -72,8 +76,10 @@ const ProposalList = () => {
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+          <LoadingSpinner size="lg" />
         </div>
+      ) : error ? (
+        <ErrorMessage message={error} onRetry={fetchProposals} />
       ) : (
         <div className="grid gap-6">
           {proposals.map((proposal) => (
@@ -87,11 +93,18 @@ const ProposalList = () => {
                   <h2 className="text-xl font-semibold mb-2">{proposal.title}</h2>
                   <p className="text-gray-600 mb-4 line-clamp-2">{proposal.content}</p>
                   <div className="flex items-center text-sm text-gray-500">
-                    <span>Created {formatDate(proposal.createdAt)}</span>
+                    <span>Created by {proposal.created_by.email}</span>
+                    <span className="mx-2">•</span>
+                    <span>Created {formatDate(proposal.created_at)}</span>
                     <span className="mx-2">•</span>
                     <span>
-                      Voting ends {formatDate(proposal.votingEndDate)}
+                      Voting ends {formatDate(proposal.voting_end_date)}
                     </span>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                    <span>{proposal.versions.count} versions</span>
+                    <span>{proposal.comments.count} comments</span>
+                    <span>{proposal.votes.count} votes</span>
                   </div>
                 </div>
                 <div className="ml-4">

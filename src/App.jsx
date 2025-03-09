@@ -6,6 +6,8 @@ import ProposalList from './pages/ProposalList';
 import ProposalDetail from './pages/ProposalDetail';
 import CreateProposal from './pages/CreateProposal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -51,6 +53,17 @@ function App() {
             }
           />
         </Routes>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </Router>
     </AuthProvider>
   );

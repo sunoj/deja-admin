@@ -1,0 +1,7 @@
+---
+description: about the project deploy 
+globs: 
+alwaysApply: false
+---
+
+this project is deploy to cloudflare pages
