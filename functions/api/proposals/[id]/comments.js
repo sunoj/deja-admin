@@ -54,7 +54,7 @@ async function handleAddComment(context) {
   try {
     const supabase = getSupabaseClient(env);
     const { id } = params;
-    const { content, parentId } = await request.json();
+    const { content } = await request.json();
 
     // Validate content
     if (!content?.trim()) {
@@ -75,8 +75,7 @@ async function handleAddComment(context) {
       .insert({
         proposal_id: id,
         content,
-        author_id: user.id,
-        parent_id: parentId || null
+        author_id: user.id
       })
       .select(`
         *,

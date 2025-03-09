@@ -102,9 +102,19 @@ async function handleCastVote(context) {
     }
 
     const now = new Date();
-    if (now < new Date(proposal.voting_start_date) || now > new Date(proposal.voting_end_date)) {
+    const votingStartDate = new Date(proposal.voting_start_date);
+    const votingEndDate = new Date(proposal.voting_end_date);
+
+    if (now < votingStartDate || now > votingEndDate) {
       return new Response(
-        JSON.stringify({ error: 'Voting is not currently active for this proposal' }),
+        JSON.stringify({ 
+          error: 'Voting is not currently active for this proposal',
+          details: {
+            now: now.toISOString(),
+            startDate: votingStartDate.toISOString(),
+            endDate: votingEndDate.toISOString()
+          }
+        }),
         {
           status: 400,
           headers: {
@@ -115,8 +125,14 @@ async function handleCastVote(context) {
       );
     }
 
-    // Get user's voting power
-    const votingPower = await calculateUserVotingPower(user.id);
+    // Get user's voting power from admins table
+    const { data: admin, error: adminError } = await supabase
+      .from('admins')
+      .select('voting_power')
+      .eq('id', user.id)
+      .single();
+
+    if (adminError) throw adminError;
 
     // Upsert vote
     const { data: vote, error: voteError } = await supabase
@@ -125,7 +141,7 @@ async function handleCastVote(context) {
         proposal_id: id,
         voter_id: user.id,
         support,
-        voting_power: votingPower,
+        voting_power: admin.voting_power,
         reason
       })
       .select(`
@@ -156,13 +172,6 @@ async function handleCastVote(context) {
       }
     );
   }
-}
-
-// Helper function to calculate user's voting power
-async function calculateUserVotingPower(userId) {
-  // Implement your voting power calculation logic here
-  // This could be based on token holdings, reputation, etc.
-  return 1; // Default voting power
 }
 
 export const onRequestGet = handleGetVotes;

@@ -11,17 +11,26 @@ async function handleListProposals(context) {
   try {
     const supabase = getSupabaseClient(env);
     const url = new URL(request.url);
-    const status = url.searchParams.get('status') || 'active';
+    const status = url.searchParams.get('status');
 
-    // Get proposals with creator info
-    const { data: proposals, error: proposalsError } = await supabase
+    // Build query
+    let query = supabase
       .from('proposals')
       .select(`
         *,
         created_by_admin:admins!created_by(id, username)
       `)
-      .eq('status', status)
       .order('created_at', { ascending: false });
+
+    // Add status filter if provided, otherwise show active proposals
+    if (status) {
+      query = query.eq('status', status);
+    } else {
+      query = query.eq('status', 'active');
+    }
+
+    // Get proposals with creator info
+    const { data: proposals, error: proposalsError } = await query;
 
     if (proposalsError) throw proposalsError;
 

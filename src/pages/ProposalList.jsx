@@ -103,9 +103,9 @@ const ProposalList = () => {
                     </span>
                   </div>
                   <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-                    <span>{proposal.versions.count} versions</span>
-                    <span>{proposal.comments.count} comments</span>
-                    <span>{proposal.votes.count} votes</span>
+                    <span>{proposal.versions?.count || 0} versions</span>
+                    <span>{proposal.comments?.count || 0} comments</span>
+                    <span>{proposal.votes?.count || 0} votes</span>
                   </div>
                 </div>
                 <div className="ml-4">

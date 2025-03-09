@@ -124,36 +124,63 @@ const ProposalDetail = () => {
               
               <div className="border-t pt-6">
                 <h2 className="text-xl font-semibold mb-4">Voting</h2>
-                {new Date() >= new Date(proposal.votingStartDate) &&
-                 new Date() <= new Date(proposal.votingEndDate) ? (
-                  <div className="flex space-x-4 mb-6">
-                    <button
-                      className={`px-6 py-3 rounded-lg ${
-                        voteChoice === true
-                          ? 'bg-green-500 text-white'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
-                      }`}
-                      onClick={() => handleVote(true)}
-                    >
-                      Support
-                    </button>
-                    <button
-                      className={`px-6 py-3 rounded-lg ${
-                        voteChoice === false
-                          ? 'bg-red-500 text-white'
-                          : 'bg-red-100 text-red-700 hover:bg-red-200'
-                      }`}
-                      onClick={() => handleVote(false)}
-                    >
-                      Oppose
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-gray-500">
-                    {new Date() < new Date(proposal.votingStartDate)
-                      ? 'Voting has not started yet'
-                      : 'Voting has ended'}
-                  </div>
+                {proposal.status === 'active' && (
+                  <>
+                    {console.log('Proposal dates:', {
+                      start: proposal.voting_start_date,
+                      end: proposal.voting_end_date,
+                      now: new Date(),
+                      isActive: proposal.status === 'active',
+                      isInVotingPeriod: new Date(proposal.voting_start_date).getTime() <= new Date().getTime() && 
+                                     new Date(proposal.voting_end_date).getTime() >= new Date().getTime()
+                    })}
+                    {new Date(proposal.voting_start_date).getTime() <= new Date().getTime() &&
+                     new Date(proposal.voting_end_date).getTime() >= new Date().getTime() ? (
+                      <div className="flex space-x-4 mb-6">
+                        <button
+                          className={`px-6 py-3 rounded-lg ${
+                            voteChoice === true
+                              ? 'bg-green-500 text-white'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                          onClick={() => handleVote(true)}
+                        >
+                          Support
+                        </button>
+                        <button
+                          className={`px-6 py-3 rounded-lg ${
+                            voteChoice === false
+                              ? 'bg-red-500 text-white'
+                              : 'bg-red-100 text-red-700 hover:bg-red-200'
+                          }`}
+                          onClick={() => handleVote(false)}
+                        >
+                          Oppose
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-gray-500">
+                        {new Date(proposal.voting_start_date).getTime() > new Date().getTime() ? (
+                          <div>
+                            <div>Voting has not started yet</div>
+                            <div className="text-sm mt-1">
+                              Voting starts: {new Date(proposal.voting_start_date).toLocaleString()}
+                            </div>
+                            <div className="text-sm">
+                              Voting ends: {new Date(proposal.voting_end_date).toLocaleString()}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div>Voting has ended</div>
+                            <div className="text-sm mt-1">
+                              Voting ended: {new Date(proposal.voting_end_date).toLocaleString()}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
                 
                 {votingResults && (

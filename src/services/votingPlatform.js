@@ -71,5 +71,10 @@ export const votingPlatformService = {
 
   getVotingResults: async (proposalId) => {
     return api.get(`/${proposalId}/votes`);
+  },
+
+  // Admin voting power
+  updateVotingPower: async (adminId, votingPower) => {
+    return api.put(`/admins/${adminId}/voting_power`, { voting_power: votingPower });
   }
 }; 
