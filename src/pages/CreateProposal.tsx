@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { votingPlatformService } from '../services/votingPlatform';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
+import { ProposalFormData, ProposalData, ProposalResponse } from '../types/proposal';
 
-const CreateProposal = () => {
+const CreateProposal: React.FC = () => {
   const navigate = useNavigate();
   
   // Get current date in local timezone
-  const getLocalDateTime = () => {
+  const getLocalDateTime = (): string => {
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -20,7 +21,7 @@ const CreateProposal = () => {
   };
 
   // Get date 3 days later in local timezone
-  const getThreeDaysLaterDateTime = () => {
+  const getThreeDaysLaterDateTime = (): string => {
     const now = new Date();
     const threeDaysLater = new Date(now);
     threeDaysLater.setDate(threeDaysLater.getDate() + 3);
@@ -30,14 +31,14 @@ const CreateProposal = () => {
     return `${year}-${month}-${day}T08:00`;
   };
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProposalFormData>({
     title: '',
     content: '',
     votingStartDate: getLocalDateTime(),
     votingEndDate: getThreeDaysLaterDateTime()
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     setFormData(prev => ({
@@ -47,7 +48,7 @@ const CreateProposal = () => {
     }));
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -55,14 +56,14 @@ const CreateProposal = () => {
     }));
   };
 
-  const handleContentChange = (value) => {
+  const handleContentChange = (value: string | undefined): void => {
     setFormData(prev => ({
       ...prev,
       content: value || ''
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setError('');
 
@@ -88,14 +89,14 @@ const CreateProposal = () => {
     try {
       setLoading(true);
       // Format dates to ISO string to preserve timezone information
-      const proposalData = {
+      const proposalData: ProposalData = {
         ...formData,
         votingStartDate: startDate.toISOString(),
         votingEndDate: endDate.toISOString(),
         status: 'draft',
         currentVersion: 1
       };
-      const response = await votingPlatformService.createProposal(proposalData);
+      const response: ProposalResponse = await votingPlatformService.createProposal(proposalData);
       navigate(`/proposals/${response.id}`);
     } catch (error) {
       console.error('Error creating proposal:', error);

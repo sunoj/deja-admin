@@ -1,17 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '../services/api';
+import { AuthContextValue, AuthResponse } from '../types/api';
 
-const AuthContext = createContext(null);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: AuthProviderProps): React.ReactElement {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  const checkAuth = async () => {
+  const checkAuth = async (): Promise<void> => {
     try {
       const data = await authApi.checkAuth();
       setIsAuthenticated(data.success);
@@ -23,7 +28,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = async (username, password) => {
+  const login = async (username: string, password: string): Promise<AuthResponse> => {
     try {
       const data = await authApi.login(username, password);
       if (data.success) {
@@ -38,7 +43,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       await authApi.logout();
       setIsAuthenticated(false);
@@ -47,7 +52,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (username, password, confirmPassword, email) => {
+  const register = async (
+    username: string,
+    password: string,
+    confirmPassword: string,
+    email: string
+  ): Promise<AuthResponse> => {
     try {
       if (password !== confirmPassword) {
         return { success: false, error: 'Passwords do not match' };
@@ -76,7 +86,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');

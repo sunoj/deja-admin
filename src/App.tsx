@@ -8,13 +8,14 @@ import CreateProposal from './pages/CreateProposal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { PrivateRouteProps } from './types/auth';
 
-function PrivateRoute({ children }) {
+const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" />;
-}
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+};
 
-function App() {
+const App: React.FC = () => {
   return (
     <AuthProvider>
       <Router>
@@ -67,6 +68,6 @@ function App() {
       </Router>
     </AuthProvider>
   );
-}
+};
 
 export default App; 

@@ -1,47 +1,25 @@
-export interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  department?: string;
-}
+import { Employee, Checkin, WorkOrder, SopRecord, LeaveRequest } from './api';
 
-export interface Checkin {
-  id: string;
-  employeeId: string;
-  timestamp: string;
-  ip: string;
-  location?: string;
-  device?: string;
-  status: 'perfect_on_time' | 'on_time' | 'late_10' | 'late_15';
-}
+export type ViewType = 'calendar' | 'list';
+export type BusinessType = 'checkins' | 'workOrders' | 'sopRecords' | 'leaveRequests';
 
-export interface WorkOrder {
-  id: string;
-  employeeId: string;
-  title: string;
-  description: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SopRecord {
-  id: string;
-  employeeId: string;
-  sopId: string;
-  completedAt: string;
-  status: string;
-  notes?: string;
-}
-
-export interface LeaveRequest {
-  id: string;
-  employeeId: string;
-  startDate: string;
-  endDate: string;
-  type: string;
-  status: string;
-  reason?: string;
+export interface DashboardProps {
+  checkins: Checkin[];
+  workOrders: WorkOrder[];
+  sopRecords: SopRecord[];
+  leaveRequests: LeaveRequest[];
+  employees: Employee[];
+  selectedEmployee: string;
+  currentDate: Date;
+  view: ViewType;
+  selectedBusinessType: BusinessType;
+  isLoading: boolean;
+  error: string | null;
+  onEmployeeChange: (employeeId: string) => void;
+  onMonthChange: (date: Date) => void;
+  onIpClick: (ip: string) => void;
+  onLeaveRequestAction: (requestId: string, action: 'APPROVE' | 'REJECT') => Promise<void>;
+  onLogout: () => Promise<void>;
 }
 
 export interface IpInfo {
@@ -53,7 +31,4 @@ export interface IpInfo {
   org?: string;
   postal?: string;
   timezone?: string;
-}
-
-export type ViewType = 'calendar' | 'list';
-export type BusinessType = 'checkins' | 'workOrders' | 'sopRecords'; 
+} 

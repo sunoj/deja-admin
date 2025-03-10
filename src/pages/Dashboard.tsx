@@ -1,32 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import CalendarView from '../components/CalendarView';
 import ListView from '../components/ListView';
 import EmployeeFilter from '../components/EmployeeFilter';
 import IpInfoModal from '../components/IpInfoModal';
 import { dataApi } from '../services/api';
+import { ViewType, BusinessType, IpInfo } from '../types/dashboard';
+import { Employee, Checkin, WorkOrder, SopRecord, LeaveRequest } from '../types/api';
 
-function Dashboard() {
+const Dashboard: React.FC = () => {
   const { logout } = useAuth();
-  const [view, setView] = useState('calendar');
-  const [checkins, setCheckins] = useState([]);
-  const [workOrders, setWorkOrders] = useState([]);
-  const [sopRecords, setSopRecords] = useState([]);
-  const [leaveRequests, setLeaveRequests] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState('all');
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [ipInfo, setIpInfo] = useState(null);
-  const [showIpModal, setShowIpModal] = useState(false);
-  const [selectedBusinessType, setSelectedBusinessType] = useState('checkins');
+  const [view, setView] = useState<ViewType>('calendar');
+  const [checkins, setCheckins] = useState<Checkin[]>([]);
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+  const [sopRecords, setSopRecords] = useState<SopRecord[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [ipInfo, setIpInfo] = useState<IpInfo | null>(null);
+  const [showIpModal, setShowIpModal] = useState<boolean>(false);
+  const [selectedBusinessType, setSelectedBusinessType] = useState<BusinessType>('checkins');
 
   useEffect(() => {
     loadData();
   }, [currentDate, selectedEmployee]);
 
-  const loadData = async () => {
+  const loadData = async (): Promise<void> => {
     setIsLoading(true);
     setError(null);
 
@@ -35,6 +38,12 @@ function Dashboard() {
       const month = currentDate.getMonth();
       const startDate = new Date(year, month, 1);
       const endDate = new Date(year, month + 1, 0);
+
+      console.log('Fetching data for date range:', {
+        startDate: startDate.toLocaleString(),
+        endDate: endDate.toLocaleString(),
+        selectedEmployee
+      });
 
       // Fetch leave requests
       const leaveResponse = await fetch('/api/leave/list', {
@@ -54,15 +63,24 @@ function Dashboard() {
       }
 
       const leaveData = await leaveResponse.json();
+      console.log('Leave requests data:', leaveData);
       setLeaveRequests(Array.isArray(leaveData) ? leaveData : []);
 
       // Fetch other data
+      console.log('Fetching other data...');
       const [checkinsData, workOrdersData, sopRecordsData, employeesData] = await Promise.all([
         dataApi.fetchCheckins(startDate, endDate, selectedEmployee),
         dataApi.fetchWorkOrders(startDate, endDate),
         dataApi.fetchSopRecords(startDate, endDate),
         dataApi.getEmployees()
       ]);
+
+      console.log('Fetched data:', {
+        checkins: checkinsData,
+        workOrders: workOrdersData,
+        sopRecords: sopRecordsData,
+        employees: employeesData
+      });
 
       setCheckins(Array.isArray(checkinsData) ? checkinsData : []);
       setWorkOrders(Array.isArray(workOrdersData) ? workOrdersData : []);
@@ -83,20 +101,20 @@ function Dashboard() {
     }
   };
 
-  const handleEmployeeChange = (employeeId) => {
+  const handleEmployeeChange = (employeeId: string): void => {
     setSelectedEmployee(employeeId);
   };
 
-  const handleMonthChange = (date) => {
+  const handleMonthChange = (date: Date): void => {
     setCurrentDate(date);
   };
 
-  const handleIpClick = (ip) => {
-    setIpInfo(ip);
+  const handleIpClick = (ip: string): void => {
+    setIpInfo({ ip });
     setShowIpModal(true);
   };
 
-  const handleLeaveRequestAction = async (requestId, action) => {
+  const handleLeaveRequestAction = async (requestId: string, action: 'APPROVE' | 'REJECT'): Promise<void> => {
     try {
       await dataApi.updateLeaveRequest(requestId, action);
       // Reload data after action
@@ -141,9 +159,15 @@ function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <Link
+              to="/proposals"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium shadow-sm"
+            >
+              Proposals
+            </Link>
             <button
               onClick={logout}
-              className="btn btn-secondary"
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200 text-sm font-medium shadow-sm"
             >
               Logout
             </button>
@@ -238,6 +262,6 @@ function Dashboard() {
       />
     </div>
   );
-}
+};
 
 export default Dashboard; 

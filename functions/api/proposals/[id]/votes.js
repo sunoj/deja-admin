@@ -147,7 +147,10 @@ async function handleCastVote(context) {
         voter_id: user.id,
         support,
         voting_power: admin.voting_power,
-        reason
+        reason,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'proposal_id,voter_id'
       })
       .select(`
         *,

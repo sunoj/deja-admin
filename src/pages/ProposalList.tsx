@@ -3,32 +3,33 @@ import { Link } from 'react-router-dom';
 import { votingPlatformService } from '../services/votingPlatform';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import { ProposalData } from '../types/proposal';
 
-const ProposalList = () => {
-  const [proposals, setProposals] = useState([]);
-  const [activeTab, setActiveTab] = useState('active');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const ProposalList: React.FC = () => {
+  const [proposals, setProposals] = useState<ProposalData[]>([]);
+  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProposals();
   }, [activeTab]);
 
-  const fetchProposals = async () => {
+  const fetchProposals = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
       const data = await votingPlatformService.getProposals(activeTab);
       setProposals(Array.isArray(data) ? data : []);
     } catch (error) {
-      setError(error.response?.data?.error || 'Failed to fetch proposals');
+      setError(error instanceof Error ? error.message : 'Failed to fetch proposals');
       setProposals([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (date) => {
+  const formatDate = (date: string): string => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
