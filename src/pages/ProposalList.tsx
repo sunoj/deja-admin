@@ -40,7 +40,15 @@ const ProposalList: React.FC = () => {
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-0">Proposals</h1>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/"
+            className="text-gray-600 hover:text-gray-900 text-sm sm:text-base"
+          >
+            ← Back to Home
+          </Link>
+          <h1 className="text-xl sm:text-2xl font-bold">Proposals</h1>
+        </div>
         <Link
           to="/proposals/create"
           className="w-full sm:w-auto bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-center"

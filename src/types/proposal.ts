@@ -73,6 +73,7 @@ export interface VotingResult {
     voting_power: number;
     reason: string | null;
     created_at: string;
+    updated_at: string;
   }>;
 }
 

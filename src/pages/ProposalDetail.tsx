@@ -145,17 +145,16 @@ const ProposalDetail: React.FC = () => {
     if (!dateString) return '';
     try {
       const date = new Date(dateString);
-      console.log('Original date string:', dateString);
-      console.log('Parsed date:', date);
-      const formattedDate = date.toLocaleString('en-US', {
+      // Convert to Bangkok timezone (UTC+7)
+      const bangkokTime = new Date(date.getTime() + (date.getTimezoneOffset() * 60000) + (7 * 60 * 60000));
+      const formattedDate = bangkokTime.toLocaleString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'Asia/Bangkok'
+        hour12: true
       });
-      console.log('Formatted date:', formattedDate);
       return formattedDate;
     } catch (error) {
       console.error('Error formatting date:', error);
@@ -399,7 +398,7 @@ const ProposalDetail: React.FC = () => {
 
                   {voteChoice !== null && (
                     <div className="text-center text-gray-600">
-                      You voted {voteChoice ? 'Support' : 'Oppose'} on {formatDate(votingResults.votingHistory.find(vote => vote.voter.id === currentUser?.id)?.created_at || '')}
+                      You voted {voteChoice ? 'Support' : 'Oppose'} on {formatDate(votingResults.votingHistory.find(vote => vote.voter.id === currentUser?.id)?.updated_at || '')}
                     </div>
                   )}
                 </>

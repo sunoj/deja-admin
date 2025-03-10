@@ -15,14 +15,18 @@ const DaySummaryModal: React.FC<DaySummaryModalProps> = ({
   if (!isOpen) return null;
 
   const formatTime = (dateString: string): string => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
+    const date = new Date(dateString);
+    const bangkokTime = new Date(date.getTime() + (date.getTimezoneOffset() * 60000) + (7 * 60 * 60000));
+    return bangkokTime.toLocaleTimeString('en-US', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     });
   };
 
   const formatDate = (date: Date): string => {
-    return date.toLocaleDateString('en-US', {
+    const bangkokTime = new Date(date.getTime() + (date.getTimezoneOffset() * 60000) + (7 * 60 * 60000));
+    return bangkokTime.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
