@@ -47,12 +47,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (username, password, confirmPassword) => {
+  const register = async (username, password, confirmPassword, email) => {
     try {
       if (password !== confirmPassword) {
         return { success: false, error: 'Passwords do not match' };
       }
-      const data = await authApi.register(username, password);
+      const data = await authApi.register(username, password, email);
       if (data.success) {
         setIsAuthenticated(true);
         return { success: true };

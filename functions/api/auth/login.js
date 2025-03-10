@@ -69,12 +69,12 @@ export async function onRequest(context) {
   }
   
   try {
-    // 解析请求体
+    // Parse request body
     const { username, password } = await context.request.json();
     
     if (!username || !password) {
       return new Response(JSON.stringify({
-        error: 'Username and password are required'
+        error: 'Username/Email and password are required'
       }), {
         status: 400,
         headers: {
@@ -84,17 +84,20 @@ export async function onRequest(context) {
       });
     }
     
-    // 创建 Supabase 客户端
+    // Create Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // 查询管理员
-    const { data: admin, error: adminError } = await supabase
+    // Check if username is email
+    const isEmail = username.includes('@');
+    
+    // Find admin by username or email
+    const { data: admin, error: findError } = await supabase
       .from('admins')
       .select('*')
-      .eq('username', username)
+      .or(isEmail ? `email.eq.${username}` : `username.eq.${username.toLowerCase()}`)
       .single();
     
-    if (adminError || !admin) {
+    if (findError || !admin) {
       return new Response(JSON.stringify({
         error: 'Invalid credentials'
       }), {
@@ -106,7 +109,7 @@ export async function onRequest(context) {
       });
     }
     
-    // 验证密码
+    // Validate password
     const validPassword = await comparePasswords(password, admin.password_hash);
     
     if (!validPassword) {
@@ -121,7 +124,7 @@ export async function onRequest(context) {
       });
     }
     
-    // 更新最后登录时间
+    // Update last login time
     await supabase
       .from('admins')
       .update({ last_login: new Date().toISOString() })
@@ -161,7 +164,7 @@ export async function onRequest(context) {
       });
     }
     
-    // 返回成功响应
+    // Return success response
     return new Response(JSON.stringify({
       success: true,
       token,

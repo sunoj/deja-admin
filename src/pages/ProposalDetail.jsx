@@ -27,6 +27,18 @@ const ProposalDetail = () => {
     fetchCurrentUser();
   }, [id]);
 
+  // Add new useEffect to update vote choice when currentUser changes
+  useEffect(() => {
+    if (currentUser && votingResults?.votingHistory) {
+      const userVote = votingResults.votingHistory.find(vote => vote.voter.id === currentUser.id);
+      if (userVote) {
+        setVoteChoice(userVote.support);
+      } else {
+        setVoteChoice(null);
+      }
+    }
+  }, [currentUser, votingResults]);
+
   const fetchProposalData = async () => {
     try {
       setLoading(true);
@@ -327,34 +339,44 @@ const ProposalDetail = () => {
                     })}
                     {new Date(proposal.voting_start_date).getTime() > new Date().getTime() ? (
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <div className="flex items-center text-yellow-800 mb-2">
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="font-medium">Voting has not started yet</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="bg-white p-3 rounded-md">
-                            <div className="text-yellow-600 font-medium mb-1">Start Time</div>
-                            <div className="text-gray-700">{formatDate(proposal.voting_start_date)}</div>
+                        <div className="flex items-center justify-between text-yellow-800">
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="font-medium">Voting has not started yet</span>
                           </div>
-                          <div className="bg-white p-3 rounded-md">
-                            <div className="text-yellow-600 font-medium mb-1">End Time</div>
-                            <div className="text-gray-700">{formatDate(proposal.voting_end_date)}</div>
+                          <div className="text-sm">
+                            <span className="font-medium">Start:</span> {formatDate(proposal.voting_start_date)}
+                          </div>
+                        </div>
+                      </div>
+                    ) : new Date(proposal.voting_end_date).getTime() < new Date().getTime() ? (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between text-red-800">
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="font-medium">Voting has ended</span>
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Ended:</span> {formatDate(proposal.voting_end_date)}
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div className="flex items-center text-red-800 mb-2">
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="font-medium">Voting has ended</span>
-                        </div>
-                        <div className="bg-white p-3 rounded-md text-sm">
-                          <div className="text-red-600 font-medium mb-1">End Time</div>
-                          <div className="text-gray-700">{formatDate(proposal.voting_end_date)}</div>
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between text-green-800">
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="font-medium">Voting is active</span>
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Ends:</span> {formatDate(proposal.voting_end_date)}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -362,7 +384,7 @@ const ProposalDetail = () => {
                 )}
                 
                 {votingResults && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 mt-6">
                     <div className="bg-green-50 p-4 rounded-lg">
                       <div className="text-lg font-semibold text-green-700">
                         Support: {votingResults.supportVotes}
@@ -370,6 +392,16 @@ const ProposalDetail = () => {
                       <div className="text-sm text-green-600">
                         Voting Power: {votingResults.supportVotingPower}
                       </div>
+                      <button
+                        onClick={() => handleVote(true)}
+                        className={`mt-3 w-full px-4 py-2 rounded-lg font-medium ${
+                          voteChoice === true
+                            ? 'bg-green-600 text-white'
+                            : 'bg-white text-green-600 border border-green-600 hover:bg-green-50'
+                        }`}
+                      >
+                        Support
+                      </button>
                     </div>
                     <div className="bg-red-50 p-4 rounded-lg">
                       <div className="text-lg font-semibold text-red-700">
@@ -378,6 +410,43 @@ const ProposalDetail = () => {
                       <div className="text-sm text-red-600">
                         Voting Power: {votingResults.oppositionVotingPower}
                       </div>
+                      <button
+                        onClick={() => handleVote(false)}
+                        className={`mt-3 w-full px-4 py-2 rounded-lg font-medium ${
+                          voteChoice === false
+                            ? 'bg-red-600 text-white'
+                            : 'bg-white text-red-600 border border-red-600 hover:bg-red-50'
+                        }`}
+                      >
+                        Oppose
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Voting History */}
+                {votingResults?.votingHistory && votingResults.votingHistory.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-3">Voting History</h3>
+                    <div className="space-y-3">
+                      {votingResults.votingHistory.map((vote, index) => (
+                        <div key={index} className="bg-white border rounded-lg p-3 flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              vote.support ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                            }`}>
+                              {vote.support ? '✓' : '✕'}
+                            </div>
+                            <div>
+                              <div className="font-medium">{vote.voter.username}</div>
+                              <div className="text-sm text-gray-500">{formatDate(vote.created_at)}</div>
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Power: {vote.voting_power}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

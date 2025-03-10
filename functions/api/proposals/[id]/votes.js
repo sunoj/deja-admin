@@ -14,8 +14,12 @@ async function handleGetVotes(context) {
 
     const { data: votes, error } = await supabase
       .from('proposal_votes')
-      .select('support, voting_power')
-      .eq('proposal_id', id);
+      .select(`
+        *,
+        voter:admins!voter_id(id, username)
+      `)
+      .eq('proposal_id', id)
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
@@ -28,7 +32,8 @@ async function handleGetVotes(context) {
       supportVotingPower: votes.filter(v => v.support)
         .reduce((sum, v) => sum + v.voting_power, 0),
       oppositionVotingPower: votes.filter(v => !v.support)
-        .reduce((sum, v) => sum + v.voting_power, 0)
+        .reduce((sum, v) => sum + v.voting_power, 0),
+      votingHistory: votes
     };
 
     return new Response(JSON.stringify(results), {

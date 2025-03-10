@@ -79,11 +79,42 @@ export async function onRequest(context) {
   
   try {
     // Parse request body
-    const { username, password } = await context.request.json();
+    const { username, password, email } = await context.request.json();
     
-    if (!username || !password) {
+    if (!username || !password || !email) {
       return new Response(JSON.stringify({
-        error: 'Username and password are required'
+        error: 'Username, password and email are required'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
+    // Validate username format (allow common characters, case-insensitive)
+    const usernameRegex = /^[a-zA-Z0-9._-]+$/;
+    if (!usernameRegex.test(username)) {
+      return new Response(JSON.stringify({
+        error: 'Username can only contain letters, numbers, dots, underscores and hyphens'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
+    // Convert username to lowercase for storage
+    const lowercaseUsername = username.toLowerCase();
+    
+    // Validate email format
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return new Response(JSON.stringify({
+        error: 'Invalid email format'
       }), {
         status: 400,
         headers: {
@@ -109,16 +140,16 @@ export async function onRequest(context) {
     // Create Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Check if username already exists
+    // Check if username or email already exists
     const { data: existingAdmin, error: checkError } = await supabase
       .from('admins')
-      .select('username')
-      .eq('username', username)
+      .select('username, email')
+      .or(`username.eq.${lowercaseUsername},email.eq.${email}`)
       .single();
     
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
       return new Response(JSON.stringify({
-        error: 'Failed to check username availability'
+        error: 'Failed to check username/email availability'
       }), {
         status: 500,
         headers: {
@@ -129,8 +160,11 @@ export async function onRequest(context) {
     }
     
     if (existingAdmin) {
+      const errorMessage = existingAdmin.username === lowercaseUsername 
+        ? 'Username already exists'
+        : 'Email already exists';
       return new Response(JSON.stringify({
-        error: 'Username already exists'
+        error: errorMessage
       }), {
         status: 400,
         headers: {
@@ -148,8 +182,9 @@ export async function onRequest(context) {
       .from('admins')
       .insert([
         {
-          username,
+          username: lowercaseUsername,
           password_hash: passwordHash,
+          email,
           created_at: new Date().toISOString(),
           last_login: new Date().toISOString()
         }
@@ -209,7 +244,8 @@ export async function onRequest(context) {
       token,
       admin: {
         id: admin.id,
-        username: admin.username
+        username: admin.username,
+        email: admin.email
       }
     }), {
       headers: {

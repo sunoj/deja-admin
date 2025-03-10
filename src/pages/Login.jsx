@@ -6,6 +6,7 @@ function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -32,8 +33,18 @@ function Login() {
     setIsLoading(true);
 
     try {
+      // Validate username format for registration
+      if (isRegistering) {
+        const usernameRegex = /^[a-zA-Z0-9._-]+$/;
+        if (!usernameRegex.test(username)) {
+          setError('Username can only contain letters, numbers, dots, underscores and hyphens');
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const result = isRegistering
-        ? await register(username, password, confirmPassword)
+        ? await register(username, password, confirmPassword, email)
         : await login(username, password);
 
       if (result.success) {
@@ -45,6 +56,18 @@ function Login() {
       setError('An error occurred during authentication');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+    if (isRegistering) {
+      // For registration, allow common characters but convert to lowercase
+      const sanitizedValue = value.replace(/[^a-zA-Z0-9._-]/g, '');
+      setUsername(sanitizedValue);
+    } else {
+      // For login, allow any characters (for email)
+      setUsername(value);
     }
   };
 
@@ -71,11 +94,26 @@ function Login() {
                 type="text"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Username"
+                placeholder={isRegistering ? "Username (letters, numbers, dots, underscores and hyphens only)" : "Username or Email"}
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={handleUsernameChange}
               />
             </div>
+            {isRegistering && (
+              <div>
+                <label htmlFor="email" className="sr-only">Email</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            )}
             <div>
               <label htmlFor="password" className="sr-only">Password</label>
               <input
@@ -83,7 +121,7 @@ function Login() {
                 name="password"
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${isRegistering ? '' : 'rounded-b-md'}`}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
