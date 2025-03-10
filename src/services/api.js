@@ -42,6 +42,9 @@ export const authApi = {
     if (data.token) {
       setToken(data.token);
     }
+    if (data.admin_id) {
+      localStorage.setItem('admin_id', data.admin_id);
+    }
     return data;
   },
 
@@ -79,17 +82,44 @@ export const authApi = {
 
 // Data API
 export const dataApi = {
-  fetchCheckins: async () => {
-    const response = await fetch('/api/checkins/all', {
+  fetchCheckins: async (startDate, endDate, employeeId = 'all') => {
+    const params = new URLSearchParams();
+    if (startDate) {
+      const start = startDate instanceof Date ? startDate : new Date(startDate);
+      params.append('start_date', start.toISOString());
+    }
+    if (endDate) {
+      const end = endDate instanceof Date ? endDate : new Date(endDate);
+      params.append('end_date', end.toISOString());
+    }
+    if (employeeId !== 'all') params.append('employee_id', employeeId);
+
+    const response = await fetch(`/api/checkins/all?${params.toString()}`, {
       headers: getHeaders(),
     });
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    // Handle both array and object responses
+    return Array.isArray(data) ? data : (data.checkins || []);
+  },
+
+  getEmployees: async () => {
+    const response = await fetch('/api/employees', {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse(response);
+    return Array.isArray(data) ? data : (data.employees || []);
   },
 
   fetchWorkOrders: async (startDate, endDate, employeeId = 'all') => {
     const params = new URLSearchParams();
-    if (startDate) params.append('start_date', startDate.toISOString());
-    if (endDate) params.append('end_date', endDate.toISOString());
+    if (startDate) {
+      const start = startDate instanceof Date ? startDate : new Date(startDate);
+      params.append('start_date', start.toISOString());
+    }
+    if (endDate) {
+      const end = endDate instanceof Date ? endDate : new Date(endDate);
+      params.append('end_date', end.toISOString());
+    }
     if (employeeId !== 'all') params.append('employee_id', employeeId);
     params.append('all', 'true'); // Get all work orders for the date range
 
@@ -102,8 +132,14 @@ export const dataApi = {
 
   fetchSopRecords: async (startDate, endDate, employeeId = 'all') => {
     const params = new URLSearchParams();
-    if (startDate) params.append('start_date', startDate.toISOString());
-    if (endDate) params.append('end_date', endDate.toISOString());
+    if (startDate) {
+      const start = startDate instanceof Date ? startDate : new Date(startDate);
+      params.append('start_date', start.toISOString());
+    }
+    if (endDate) {
+      const end = endDate instanceof Date ? endDate : new Date(endDate);
+      params.append('end_date', end.toISOString());
+    }
     if (employeeId !== 'all') params.append('employee_id', employeeId);
     params.append('all', 'true'); // Get all records for the date range
 
@@ -112,6 +148,18 @@ export const dataApi = {
     });
     const data = await handleResponse(response);
     return data.records || [];
+  },
+
+  updateLeaveRequest: async (requestId, action) => {
+    const response = await fetch(`/api/leave/approve`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ 
+        requestId,
+        status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+      }),
+    });
+    return handleResponse(response);
   },
 };
 

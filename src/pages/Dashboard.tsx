@@ -3,30 +3,43 @@ import { useAuth } from '../contexts/AuthContext';
 import CalendarView from '../components/CalendarView';
 import ListView from '../components/ListView';
 import EmployeeFilter from '../components/EmployeeFilter';
+import DownloadButton from '../components/DownloadButton';
 import IpInfoModal from '../components/IpInfoModal';
 import { dataApi } from '../services/api';
+import {
+  Employee,
+  Checkin,
+  WorkOrder,
+  SopRecord,
+  LeaveRequest,
+  IpInfo,
+  ViewType,
+  BusinessType
+} from '../types/dashboard';
 
-function Dashboard() {
+interface DashboardProps {}
+
+const Dashboard: React.FC<DashboardProps> = () => {
   const { logout } = useAuth();
-  const [view, setView] = useState('calendar');
-  const [checkins, setCheckins] = useState([]);
-  const [workOrders, setWorkOrders] = useState([]);
-  const [sopRecords, setSopRecords] = useState([]);
-  const [leaveRequests, setLeaveRequests] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState('all');
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [ipInfo, setIpInfo] = useState(null);
-  const [showIpModal, setShowIpModal] = useState(false);
-  const [selectedBusinessType, setSelectedBusinessType] = useState('checkins');
+  const [view, setView] = useState<ViewType>('calendar');
+  const [checkins, setCheckins] = useState<Checkin[]>([]);
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+  const [sopRecords, setSopRecords] = useState<SopRecord[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [ipInfo, setIpInfo] = useState<IpInfo | null>(null);
+  const [showIpModal, setShowIpModal] = useState<boolean>(false);
+  const [selectedBusinessType, setSelectedBusinessType] = useState<BusinessType>('checkins');
 
   useEffect(() => {
     loadData();
   }, [currentDate, selectedEmployee]);
 
-  const loadData = async () => {
+  const loadData = async (): Promise<void> => {
     setIsLoading(true);
     setError(null);
 
@@ -54,7 +67,7 @@ function Dashboard() {
       }
 
       const leaveData = await leaveResponse.json();
-      setLeaveRequests(Array.isArray(leaveData) ? leaveData : []);
+      setLeaveRequests(leaveData);
 
       // Fetch other data
       const [checkinsData, workOrdersData, sopRecordsData, employeesData] = await Promise.all([
@@ -64,47 +77,30 @@ function Dashboard() {
         dataApi.getEmployees()
       ]);
 
-      setCheckins(Array.isArray(checkinsData) ? checkinsData : []);
-      setWorkOrders(Array.isArray(workOrdersData) ? workOrdersData : []);
-      setSopRecords(Array.isArray(sopRecordsData) ? sopRecordsData : []);
-      setEmployees(Array.isArray(employeesData) ? employeesData : []);
+      setCheckins(checkinsData);
+      setWorkOrders(workOrdersData);
+      setSopRecords(sopRecordsData);
+      setEmployees(employeesData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while loading data';
       setError(errorMessage);
       console.error('Error loading data:', err);
-      // Set empty arrays on error
-      setCheckins([]);
-      setWorkOrders([]);
-      setSopRecords([]);
-      setLeaveRequests([]);
-      setEmployees([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEmployeeChange = (employeeId) => {
+  const handleEmployeeChange = (employeeId: string): void => {
     setSelectedEmployee(employeeId);
   };
 
-  const handleMonthChange = (date) => {
+  const handleMonthChange = (date: Date): void => {
     setCurrentDate(date);
   };
 
-  const handleIpClick = (ip) => {
+  const handleIpClick = (ip: IpInfo): void => {
     setIpInfo(ip);
     setShowIpModal(true);
-  };
-
-  const handleLeaveRequestAction = async (requestId, action) => {
-    try {
-      await dataApi.updateLeaveRequest(requestId, action);
-      // Reload data after action
-      await loadData();
-    } catch (err) {
-      console.error('Error updating leave request:', err);
-      alert('Failed to update leave request. Please try again.');
-    }
   };
 
   return (
@@ -141,6 +137,14 @@ function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <DownloadButton
+              checkins={checkins}
+              workOrders={workOrders}
+              sopRecords={sopRecords}
+              leaveRequests={leaveRequests}
+              selectedEmployee={selectedEmployee}
+              currentDate={currentDate}
+            />
             <button
               onClick={logout}
               className="btn btn-secondary"
@@ -172,60 +176,14 @@ function Dashboard() {
               />
             )}
             {view === 'list' && (
-              <>
-                <div className="flex space-x-1 bg-gray-100 p-1 m-4 rounded-lg">
-                  <button
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      selectedBusinessType === 'checkins'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setSelectedBusinessType('checkins')}
-                  >
-                    Check-ins
-                  </button>
-                  <button
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      selectedBusinessType === 'workOrders'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setSelectedBusinessType('workOrders')}
-                  >
-                    Work Orders
-                  </button>
-                  <button
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      selectedBusinessType === 'sopRecords'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setSelectedBusinessType('sopRecords')}
-                  >
-                    SOP Records
-                  </button>
-                  <button
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      selectedBusinessType === 'leaveRequests'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setSelectedBusinessType('leaveRequests')}
-                  >
-                    Leave Requests
-                  </button>
-                </div>
-                <ListView
-                  checkins={checkins}
-                  workOrders={workOrders}
-                  sopRecords={sopRecords}
-                  leaveRequests={leaveRequests}
-                  selectedEmployee={selectedEmployee}
-                  selectedBusinessType={selectedBusinessType}
-                  onIpClick={handleIpClick}
-                  onLeaveRequestAction={handleLeaveRequestAction}
-                />
-              </>
+              <ListView
+                checkins={checkins}
+                workOrders={workOrders}
+                sopRecords={sopRecords}
+                selectedEmployee={selectedEmployee}
+                selectedBusinessType={selectedBusinessType}
+                onIpClick={handleIpClick}
+              />
             )}
           </div>
         )}
@@ -238,6 +196,6 @@ function Dashboard() {
       />
     </div>
   );
-}
+};
 
 export default Dashboard; 

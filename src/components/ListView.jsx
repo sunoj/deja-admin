@@ -1,15 +1,15 @@
 import React from 'react';
 import { formatDate, formatTime, getStatusClass, getStatusText } from '../services/api';
 
-function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selectedBusinessType, onIpClick }) {
+function ListView({ checkins, workOrders, sopRecords, leaveRequests, selectedEmployee, selectedBusinessType, onIpClick, onLeaveRequestAction }) {
   let data = [];
   let columns = [];
 
   switch (selectedBusinessType) {
     case 'checkins':
       data = selectedEmployee === 'all'
-        ? [...checkins]
-        : checkins.filter(checkin => checkin.employee_id === selectedEmployee);
+        ? (Array.isArray(checkins) ? checkins : [])
+        : (Array.isArray(checkins) ? checkins.filter(checkin => checkin.employee_id === selectedEmployee) : []);
       columns = [
         { key: 'date', label: 'Date' },
         { key: 'time', label: 'Time' },
@@ -23,8 +23,8 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
       break;
     case 'workOrders':
       data = selectedEmployee === 'all'
-        ? [...workOrders]
-        : workOrders.filter(order => order.assigned_to === selectedEmployee);
+        ? (Array.isArray(workOrders) ? workOrders : [])
+        : (Array.isArray(workOrders) ? workOrders.filter(order => order.assigned_to === selectedEmployee) : []);
       columns = [
         { key: 'date', label: 'Date' },
         { key: 'time', label: 'Time' },
@@ -37,8 +37,8 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
       break;
     case 'sopRecords':
       data = selectedEmployee === 'all'
-        ? [...sopRecords]
-        : sopRecords.filter(record => record.employee_id === selectedEmployee);
+        ? (Array.isArray(sopRecords) ? sopRecords : [])
+        : (Array.isArray(sopRecords) ? sopRecords.filter(record => record.employee_id === selectedEmployee) : []);
       columns = [
         { key: 'date', label: 'Date' },
         { key: 'time', label: 'Time' },
@@ -47,6 +47,23 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
         { key: 'status', label: 'Status' }
       ];
       break;
+    case 'leaveRequests':
+      data = selectedEmployee === 'all'
+        ? (Array.isArray(leaveRequests) ? leaveRequests : [])
+        : (Array.isArray(leaveRequests) ? leaveRequests.filter(request => request.employee_id === selectedEmployee) : []);
+      columns = [
+        { key: 'employee', label: 'Employee' },
+        { key: 'leaveType', label: 'Leave Type' },
+        { key: 'startDate', label: 'Start Date' },
+        { key: 'endDate', label: 'End Date' },
+        { key: 'status', label: 'Status' },
+        { key: 'updatedAt', label: 'Updated At' },
+        { key: 'actions', label: 'Actions' }
+      ];
+      break;
+    default:
+      data = [];
+      columns = [];
   }
 
   const sortedData = data.sort(
@@ -84,6 +101,12 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleLeaveRequestAction = async (requestId, action) => {
+    if (onLeaveRequestAction) {
+      await onLeaveRequestAction(requestId, action);
+    }
   };
 
   if (sortedData.length === 0) {
@@ -131,6 +154,8 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
           return item.assignee ? item.assignee.name : 'Unknown';
         } else if (selectedBusinessType === 'sopRecords') {
           return item.employee ? item.employee.name : 'Unknown';
+        } else if (selectedBusinessType === 'leaveRequests') {
+          return item.employee_name || 'Unknown';
         }
         return 'Unknown';
       case 'status':
@@ -138,6 +163,12 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
           return (
             <span className={`badge ${getStatusClass(item.late_status)}`}>
               {getStatusText(item.late_status)}
+            </span>
+          );
+        } else if (selectedBusinessType === 'leaveRequests') {
+          return (
+            <span className={`badge ${getLeaveRequestStatusClass(item.status)}`}>
+              {item.status}
             </span>
           );
         }
@@ -191,6 +222,34 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
         );
       case 'description':
         return item.description || '-';
+      case 'leaveType':
+        return item.leave_type_name || '-';
+      case 'startDate':
+        return formatDate(new Date(item.start_date));
+      case 'endDate':
+        return formatDate(new Date(item.end_date));
+      case 'updatedAt':
+        return formatDate(new Date(item.updated_at));
+      case 'actions':
+        if (selectedBusinessType === 'leaveRequests' && item.status === 'PENDING') {
+          return (
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleLeaveRequestAction(item.id, 'APPROVE')}
+                className="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleLeaveRequestAction(item.id, 'REJECT')}
+                className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Reject
+              </button>
+            </div>
+          );
+        }
+        return null;
       default:
         return '-';
     }
@@ -218,6 +277,19 @@ function ListView({ checkins, workOrders, sopRecords, selectedEmployee, selected
       case 'in_progress':
         return 'bg-blue-100 text-blue-800';
       case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getLeaveRequestStatusClass = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'APPROVED':
+        return 'bg-green-100 text-green-800';
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'REJECTED':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';

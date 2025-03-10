@@ -10,7 +10,20 @@ function DaySummaryModal({ isOpen, onClose, date, data }) {
     day: 'numeric'
   });
 
-  const { checkins, workOrders, sopRecords } = data;
+  const { checkins, workOrders, sopRecords, leaveRequests } = data;
+
+  const getLeaveRequestClass = (status) => {
+    switch (status) {
+      case 'APPROVED':
+        return 'bg-green-50 text-green-700 border border-green-200';
+      case 'PENDING':
+        return 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+      case 'REJECTED':
+        return 'bg-red-50 text-red-700 border border-red-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border border-gray-200';
+    }
+  };
 
   return (
     <div className="modal">
@@ -29,6 +42,34 @@ function DaySummaryModal({ isOpen, onClose, date, data }) {
         </div>
         
         <div className="space-y-3 sm:space-y-4">
+          {/* Leave Requests Section */}
+          {leaveRequests.length > 0 && (
+            <div>
+              <h4 className="text-sm sm:text-base font-medium text-gray-700 mb-2 sm:mb-3">Leave Requests</h4>
+              <div className="space-y-2 sm:space-y-3">
+                {leaveRequests.map(request => (
+                  <div
+                    key={request.id}
+                    className={`p-3 sm:p-4 rounded-lg shadow-sm transition-all duration-150 hover:shadow-md ${getLeaveRequestClass(request.status)}`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
+                      <div>
+                        <div className="font-medium text-sm sm:text-base text-gray-900">{request.employee_name}</div>
+                        <div className="text-xs sm:text-sm text-gray-600">{request.leave_type_name}</div>
+                      </div>
+                      <div className="sm:text-right">
+                        <div className="font-medium text-sm sm:text-base text-gray-900">{request.status}</div>
+                        <div className="text-xs sm:text-sm text-gray-600">
+                          {new Date(request.start_date).toLocaleDateString()} - {new Date(request.end_date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Check-ins Section */}
           {checkins.length > 0 && (
             <div>
@@ -79,31 +120,16 @@ function DaySummaryModal({ isOpen, onClose, date, data }) {
                 {workOrders.map(order => (
                   <div
                     key={order.id}
-                    className="p-3 sm:p-4 rounded-lg shadow-sm transition-all duration-150 hover:shadow-md bg-white border border-gray-200"
+                    className="p-3 sm:p-4 rounded-lg shadow-sm transition-all duration-150 hover:shadow-md bg-blue-50 border border-blue-200"
                   >
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
                       <div>
-                        <a 
-                          href={`https://ts.nothingtodo.me/work-orders/${order.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-sm sm:text-base text-blue-600 hover:text-blue-800"
-                        >
-                          {order.title}
-                        </a>
+                        <div className="font-medium text-sm sm:text-base text-gray-900">{order.title}</div>
                         <div className="text-xs sm:text-sm text-gray-600">{order.description}</div>
                       </div>
                       <div className="sm:text-right">
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          order.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </div>
-                        <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                          {order.creator?.name || 'Unknown'} → {order.assignee?.name || 'Unassigned'}
-                        </div>
+                        <div className="font-medium text-sm sm:text-base text-gray-900">{order.status}</div>
+                        <div className="text-xs sm:text-sm text-gray-600">Priority: {order.priority}</div>
                       </div>
                     </div>
                   </div>
@@ -120,32 +146,25 @@ function DaySummaryModal({ isOpen, onClose, date, data }) {
                 {sopRecords.map(record => (
                   <div
                     key={record.id}
-                    className="p-3 sm:p-4 rounded-lg shadow-sm transition-all duration-150 hover:shadow-md bg-white border border-gray-200"
+                    className="p-3 sm:p-4 rounded-lg shadow-sm transition-all duration-150 hover:shadow-md bg-purple-50 border border-purple-200"
                   >
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
                       <div>
-                        <a 
-                          href={`https://sop.nothingtodo.me/record/${record.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-sm sm:text-base text-blue-600 hover:text-blue-800"
-                        >
-                          {record.workflow.name || 'Untitled Record'}
-                        </a>
-                        <div className="text-xs sm:text-sm text-gray-600">
-                          By: {record.employee?.name || 'Unknown'}
+                        <div className="font-medium text-sm sm:text-base text-gray-900">
+                          <a 
+                            href={`https://sop.nothingtodo.me/record/${record.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-purple-600 hover:text-purple-800"
+                          >
+                            {record.workflow ? record.workflow.name : 'Unknown Workflow'}
+                          </a>
                         </div>
+                        <div className="text-xs sm:text-sm text-gray-600">{record.employee ? record.employee.name : 'Unknown Employee'}</div>
                       </div>
                       <div className="sm:text-right">
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          record.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                        </div>
-                        <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                          {formatTime(record.created_at)}
-                        </div>
+                        <div className="font-medium text-sm sm:text-base text-gray-900">{record.status}</div>
+                        <div className="text-xs sm:text-sm text-gray-600">{formatTime(record.created_at)}</div>
                       </div>
                     </div>
                   </div>

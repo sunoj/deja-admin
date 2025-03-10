@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { formatTime, getStatusClass, getStatusText } from '../services/api';
 import DaySummaryModal from './DaySummaryModal';
 
-function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedEmployee, onMonthChange }) {
+function CalendarView({ checkins, workOrders, sopRecords, leaveRequests, currentDate, selectedEmployee, onMonthChange }) {
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedDayData, setSelectedDayData] = useState({
     checkins: [],
     workOrders: [],
-    sopRecords: []
+    sopRecords: [],
+    leaveRequests: []
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -38,6 +39,19 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
     setIsModalOpen(true);
   };
 
+  const getLeaveRequestClass = (status) => {
+    switch (status) {
+      case 'APPROVED':
+        return 'bg-green-50 text-green-700 border border-green-200';
+      case 'PENDING':
+        return 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+      case 'REJECTED':
+        return 'bg-red-50 text-red-700 border border-red-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border border-gray-200';
+    }
+  };
+
   const renderCalendarDays = () => {
     const days = [];
 
@@ -60,7 +74,9 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
 
       const dayCheckins = checkins.filter(checkin => {
         const checkinDate = new Date(checkin.created_at);
-        const isOnDay = checkinDate >= dayDate && checkinDate < nextDay;
+        const isOnDay = checkinDate.getFullYear() === dayDate.getFullYear() &&
+                        checkinDate.getMonth() === dayDate.getMonth() &&
+                        checkinDate.getDate() === dayDate.getDate();
         
         if (selectedEmployee === 'all') {
           return isOnDay;
@@ -79,6 +95,12 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
         return recordDate >= dayDate && recordDate < nextDay;
       });
 
+      const dayLeaveRequests = leaveRequests.filter(request => {
+        const startDate = new Date(request.start_date);
+        const endDate = new Date(request.end_date);
+        return dayDate >= startDate && dayDate <= endDate;
+      });
+
       const onTimeCount = dayCheckins.filter(checkin => 
         checkin.late_status === 'on_time' || checkin.late_status === 'perfect_on_time'
       ).length;
@@ -88,6 +110,7 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
       const totalCheckins = dayCheckins.length;
       const totalWorkOrders = dayWorkOrders.length;
       const totalSopRecords = daySopRecords.length;
+      const totalLeaveRequests = dayLeaveRequests.length;
 
       days.push(
         <div
@@ -100,11 +123,12 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
           onClick={() => handleDayClick(dayDate, {
             checkins: dayCheckins,
             workOrders: dayWorkOrders,
-            sopRecords: daySopRecords
+            sopRecords: daySopRecords,
+            leaveRequests: dayLeaveRequests
           })}
         >
           <div className={`text-[10px] sm:text-xs font-medium ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>{i}</div>
-          {(totalCheckins > 0 || totalWorkOrders > 0 || totalSopRecords > 0) && (
+          {(totalCheckins > 0 || totalWorkOrders > 0 || totalSopRecords > 0 || totalLeaveRequests > 0) && (
             <div className="mt-0.5 space-y-0.5">
               {totalCheckins > 0 && (
                 <div className="text-[8px] sm:text-xs">
@@ -128,6 +152,11 @@ function CalendarView({ checkins, workOrders, sopRecords, currentDate, selectedE
               {totalSopRecords > 0 && (
                 <div className="text-[8px] sm:text-xs text-purple-600">
                   {totalSopRecords} SOP record{totalSopRecords !== 1 ? 's' : ''}
+                </div>
+              )}
+              {totalLeaveRequests > 0 && (
+                <div className="text-[8px] sm:text-xs text-orange-600">
+                  {totalLeaveRequests} leave request{totalLeaveRequests !== 1 ? 's' : ''}
                 </div>
               )}
             </div>

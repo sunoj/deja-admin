@@ -1,6 +1,6 @@
 import React from 'react';
 
-function EmployeeFilter({ employees, selectedEmployee, onChange }) {
+function EmployeeFilter({ employees = [], selectedEmployee, onChange }) {
   return (
     <div className="flex items-center space-x-3">
       <label htmlFor="employee-select" className="text-sm font-medium text-gray-700">
@@ -13,7 +13,7 @@ function EmployeeFilter({ employees, selectedEmployee, onChange }) {
         className="input w-64"
       >
         <option value="all">All Employees</option>
-        {employees.map(employee => (
+        {Array.isArray(employees) && employees.map(employee => (
           <option key={employee.id} value={employee.id}>
             {employee.name}
           </option>
