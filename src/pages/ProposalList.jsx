@@ -94,7 +94,7 @@ const ProposalList = () => {
                   <h2 className="text-xl font-semibold mb-2">{proposal.title}</h2>
                   <p className="text-gray-600 mb-4 line-clamp-2">{proposal.content}</p>
                   <div className="flex items-center text-sm text-gray-500">
-                    <span>Created by {proposal.created_by.email}</span>
+                    <span>Created by {proposal.created_by_admin?.username || 'Unknown'}</span>
                     <span className="mx-2">•</span>
                     <span>Created {formatDate(proposal.created_at)}</span>
                     <span className="mx-2">•</span>
@@ -103,9 +103,9 @@ const ProposalList = () => {
                     </span>
                   </div>
                   <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-                    <span>{proposal.versions?.count || 0} versions</span>
-                    <span>{proposal.comments?.count || 0} comments</span>
-                    <span>{proposal.votes?.count || 0} votes</span>
+                    <span>{proposal.versions_count || 0} versions</span>
+                    <span>{proposal.comments_count || 0} comments</span>
+                    <span>{proposal.votes_count || 0} votes</span>
                   </div>
                 </div>
                 <div className="ml-4">

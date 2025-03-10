@@ -1,23 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { votingPlatformService } from '../services/votingPlatform';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
 
 const CreateProposal = () => {
   const navigate = useNavigate();
+  
+  // Get current date in local timezone
+  const getLocalDateTime = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}T08:00`;
+  };
+
+  // Get date 3 days later in local timezone
+  const getThreeDaysLaterDateTime = () => {
+    const now = new Date();
+    const threeDaysLater = new Date(now);
+    threeDaysLater.setDate(threeDaysLater.getDate() + 3);
+    const year = threeDaysLater.getFullYear();
+    const month = String(threeDaysLater.getMonth() + 1).padStart(2, '0');
+    const day = String(threeDaysLater.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}T08:00`;
+  };
+
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    votingStartDate: '',
-    votingEndDate: ''
+    votingStartDate: getLocalDateTime(),
+    votingEndDate: getThreeDaysLaterDateTime()
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      votingStartDate: getLocalDateTime(),
+      votingEndDate: getThreeDaysLaterDateTime()
+    }));
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleContentChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      content: value || ''
     }));
   };
 
@@ -46,11 +87,15 @@ const CreateProposal = () => {
 
     try {
       setLoading(true);
-      const response = await votingPlatformService.createProposal({
+      // Format dates to ISO string to preserve timezone information
+      const proposalData = {
         ...formData,
+        votingStartDate: startDate.toISOString(),
+        votingEndDate: endDate.toISOString(),
         status: 'draft',
         currentVersion: 1
-      });
+      };
+      const response = await votingPlatformService.createProposal(proposalData);
       navigate(`/proposals/${response.id}`);
     } catch (error) {
       console.error('Error creating proposal:', error);
@@ -91,15 +136,15 @@ const CreateProposal = () => {
             <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
               Content
             </label>
-            <textarea
-              id="content"
-              name="content"
-              value={formData.content}
-              onChange={handleChange}
-              rows="10"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter proposal content"
-            />
+            <div data-color-mode="light" className="mt-1">
+              <MDEditor
+                value={formData.content}
+                onChange={handleContentChange}
+                preview="live"
+                height={400}
+                className="w-full"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -113,6 +158,7 @@ const CreateProposal = () => {
                 name="votingStartDate"
                 value={formData.votingStartDate}
                 onChange={handleChange}
+                min={getLocalDateTime()}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -127,6 +173,7 @@ const CreateProposal = () => {
                 name="votingEndDate"
                 value={formData.votingEndDate}
                 onChange={handleChange}
+                min={formData.votingStartDate}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
