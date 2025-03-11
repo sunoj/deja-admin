@@ -219,7 +219,7 @@ const ScheduleManagement: React.FC = () => {
             setShowRuleModal(false);
             setSelectedRule(undefined);
           }}
-          employee={employees.find(e => e.id === selectedEmployee)}
+          employee={selectedEmployee === 'all' ? undefined : employees.find(e => e.id === selectedEmployee)}
           onSave={handleSaveRule}
           existingRule={selectedRule}
         />

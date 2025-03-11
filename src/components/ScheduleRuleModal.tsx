@@ -56,7 +56,7 @@ const ScheduleRuleModal: React.FC<ScheduleRuleModalProps> = ({
 
     try {
       await onSave({
-        employee_id: employee?.id || '',
+        employee_id: existingRule?.employee_id || employee?.id || '',
         name,
         is_default: isDefault,
         work_days: workDays,
