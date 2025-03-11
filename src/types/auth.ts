@@ -1,7 +1,8 @@
+import { ReactNode } from 'react';
+
 export interface AuthContextType {
   isAuthenticated: boolean;
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -13,5 +14,10 @@ export interface User {
 }
 
 export interface PrivateRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
+}
+
+export interface AuthResponse {
+  token: string;
+  admin_id: string;
 } 

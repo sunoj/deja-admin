@@ -6,7 +6,8 @@ import {
   WorkOrder,
   SopRecord,
   LeaveRequest,
-  LateStatus
+  LateStatus,
+  ScheduleRule
 } from '../types/api';
 
 // Get token from localStorage
@@ -146,7 +147,7 @@ export const dataApi = {
       params.append('end_date', end.toISOString().split('T')[0]);
     }
     if (employeeId !== 'all') params.append('employee_id', employeeId);
-    params.append('all', 'true'); // Get all work orders for the date range
+    params.append('all', 'true');
 
     const url = `/api/work-orders?${params.toString()}`;
     console.log('Fetching work orders:', {
@@ -177,7 +178,6 @@ export const dataApi = {
       params.append('end_date', end.toISOString().split('T')[0]);
     }
     if (employeeId !== 'all') params.append('employee_id', employeeId);
-    params.append('all', 'true'); // Get all records for the date range
 
     const url = `/api/records?${params.toString()}`;
     console.log('Fetching SOP records:', {
@@ -193,6 +193,29 @@ export const dataApi = {
     return data.records || [];
   },
 
+  fetchLeaveRequests: async (
+    startDate?: Date | string,
+    endDate?: Date | string,
+    employeeId: string = 'all'
+  ): Promise<LeaveRequest[]> => {
+    const params = new URLSearchParams();
+    if (startDate) {
+      const start = startDate instanceof Date ? startDate : new Date(startDate);
+      params.append('start_date', start.toISOString().split('T')[0]);
+    }
+    if (endDate) {
+      const end = endDate instanceof Date ? endDate : new Date(endDate);
+      params.append('end_date', end.toISOString().split('T')[0]);
+    }
+    if (employeeId !== 'all') params.append('employee_id', employeeId);
+
+    const response = await fetch(`/api/leave/list?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse<{ leave_requests: LeaveRequest[] }>(response);
+    return data.leave_requests || [];
+  },
+
   updateLeaveRequest: async (requestId: string, action: 'APPROVE' | 'REJECT'): Promise<void> => {
     const response = await fetch(`/api/leave/approve`, {
       method: 'POST',
@@ -201,6 +224,43 @@ export const dataApi = {
         requestId,
         status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
       }),
+    });
+    await handleResponse(response);
+  },
+
+  fetchScheduleRules: async (employeeId: string = 'all'): Promise<ScheduleRule[]> => {
+    const params = new URLSearchParams();
+    if (employeeId !== 'all') params.append('employee_id', employeeId);
+
+    const response = await fetch(`/api/schedules/rules?${params.toString()}`, {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse<{ rules: ScheduleRule[] }>(response);
+    return data.rules || [];
+  },
+
+  createScheduleRule: async (rule: Omit<ScheduleRule, 'id' | 'created_at' | 'updated_at'>): Promise<ScheduleRule> => {
+    const response = await fetch('/api/schedules/rules', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(rule),
+    });
+    return handleResponse<ScheduleRule>(response);
+  },
+
+  updateScheduleRule: async (ruleId: string, rule: Partial<ScheduleRule>): Promise<ScheduleRule> => {
+    const response = await fetch(`/api/schedules/rules/${ruleId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(rule),
+    });
+    return handleResponse<ScheduleRule>(response);
+  },
+
+  deleteScheduleRule: async (ruleId: string): Promise<void> => {
+    const response = await fetch(`/api/schedules/rules/${ruleId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
     });
     await handleResponse(response);
   },

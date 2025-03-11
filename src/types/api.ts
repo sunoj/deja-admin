@@ -41,13 +41,14 @@ export interface Employee {
   name: string;
   email: string;
   role: string;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 export interface Checkin {
   id: string;
   employee_id: string;
   created_at: string;
-  late_status: string;
+  late_status: LateStatus;
   penalty_percentage: number;
   exemption_applied: boolean;
   meal_allowance: number;
@@ -66,16 +67,16 @@ export interface WorkOrder {
   title: string;
   description: string;
   status: string;
-  created_by: string;
-  assigned_to: string;
+  priority: 'low' | 'medium' | 'high';
   created_at: string;
   updated_at: string;
   images: string[];
-  priority: string;
   creator: {
+    id: string;
     name: string;
   };
   assignee: {
+    id: string;
     name: string;
   };
 }
@@ -104,10 +105,23 @@ export interface LeaveRequest {
   leave_type_name: string;
   start_date: string;
   end_date: string;
-  status: string;
   reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  medical_certificate_url?: string;
   created_at: string;
   updated_at: string;
 }
 
-export type LateStatus = 'perfect_on_time' | 'on_time' | 'late_10' | 'late_15'; 
+export type LateStatus = 'perfect_on_time' | 'on_time' | 'late_10' | 'late_15';
+
+export interface ScheduleRule {
+  id: string;
+  employee_id: string;
+  name: string;
+  is_default: boolean;
+  work_days: number[]; // 0-6 for Sunday-Saturday
+  start_date: string;
+  end_date: string | null;
+  created_at: string;
+  updated_at: string;
+} 

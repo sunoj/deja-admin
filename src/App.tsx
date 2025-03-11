@@ -1,19 +1,15 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import ScheduleManagement from './pages/ScheduleManagement';
+import PrivateRoute from './components/PrivateRoute';
 import ProposalList from './pages/ProposalList';
 import ProposalDetail from './pages/ProposalDetail';
 import CreateProposal from './pages/CreateProposal';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { PrivateRouteProps } from './types/auth';
-
-const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-};
 
 const App: React.FC = () => {
   return (
@@ -22,13 +18,22 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <Dashboard />
               </PrivateRoute>
             }
           />
+          <Route
+            path="/schedules"
+            element={
+              <PrivateRoute>
+                <ScheduleManagement />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route
             path="/proposals"
             element={

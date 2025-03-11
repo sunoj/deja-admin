@@ -7,7 +7,7 @@ import EmployeeFilter from '../components/EmployeeFilter';
 import IpInfoModal from '../components/IpInfoModal';
 import { dataApi } from '../services/api';
 import { ViewType, BusinessType, IpInfo } from '../types/dashboard';
-import { Employee, Checkin, WorkOrder, SopRecord, LeaveRequest } from '../types/api';
+import { Employee, Checkin, WorkOrder, SopRecord, LeaveRequest, ScheduleRule } from '../types/api';
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuth();
@@ -16,6 +16,7 @@ const Dashboard: React.FC = () => {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [sopRecords, setSopRecords] = useState<SopRecord[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [scheduleRules, setScheduleRules] = useState<ScheduleRule[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -29,92 +30,58 @@ const Dashboard: React.FC = () => {
     loadData();
   }, [currentDate, selectedEmployee]);
 
-  const loadData = async (): Promise<void> => {
+  const loadData = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
+      const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-      console.log('Fetching data for date range:', {
-        startDate: startDate.toLocaleString(),
-        endDate: endDate.toLocaleString(),
-        selectedEmployee
-      });
-
-      // Fetch leave requests
-      const leaveResponse = await fetch('/api/leave/list', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          employeeId: selectedEmployee
-        }),
-      });
-
-      if (!leaveResponse.ok) {
-        throw new Error('Failed to fetch leave requests');
-      }
-
-      const leaveData = await leaveResponse.json();
-      console.log('Leave requests data:', leaveData);
-      setLeaveRequests(Array.isArray(leaveData) ? leaveData : []);
-
-      // Fetch other data
-      console.log('Fetching other data...');
-      const [checkinsData, workOrdersData, sopRecordsData, employeesData] = await Promise.all([
+      const [
+        employeesData,
+        checkinsData,
+        workOrdersData,
+        sopRecordsData,
+        leaveRequestsData,
+        scheduleRulesData
+      ] = await Promise.all([
+        dataApi.getEmployees(),
         dataApi.fetchCheckins(startDate, endDate, selectedEmployee),
-        dataApi.fetchWorkOrders(startDate, endDate),
-        dataApi.fetchSopRecords(startDate, endDate),
-        dataApi.getEmployees()
+        dataApi.fetchWorkOrders(startDate, endDate, selectedEmployee),
+        dataApi.fetchSopRecords(startDate, endDate, selectedEmployee),
+        dataApi.fetchLeaveRequests(startDate, endDate, selectedEmployee),
+        dataApi.fetchScheduleRules(selectedEmployee)
       ]);
 
-      console.log('Fetched data:', {
-        checkins: checkinsData,
-        workOrders: workOrdersData,
-        sopRecords: sopRecordsData,
-        employees: employeesData
-      });
-
-      setCheckins(Array.isArray(checkinsData) ? checkinsData : []);
-      setWorkOrders(Array.isArray(workOrdersData) ? workOrdersData : []);
-      setSopRecords(Array.isArray(sopRecordsData) ? sopRecordsData : []);
-      setEmployees(Array.isArray(employeesData) ? employeesData : []);
+      setEmployees(employeesData);
+      setCheckins(checkinsData);
+      setWorkOrders(workOrdersData);
+      setSopRecords(sopRecordsData);
+      setLeaveRequests(leaveRequestsData);
+      setScheduleRules(scheduleRulesData);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred while loading data';
-      setError(errorMessage);
-      console.error('Error loading data:', err);
-      // Set empty arrays on error
-      setCheckins([]);
-      setWorkOrders([]);
-      setSopRecords([]);
-      setLeaveRequests([]);
-      setEmployees([]);
+      console.error('Error loading dashboard data:', err);
+      setError('Failed to load data');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEmployeeChange = (employeeId: string): void => {
+  const handleEmployeeChange = (employeeId: string) => {
     setSelectedEmployee(employeeId);
   };
 
-  const handleMonthChange = (date: Date): void => {
+  const handleMonthChange = (date: Date) => {
     setCurrentDate(date);
   };
 
-  const handleIpClick = (ip: string): void => {
+  const handleIpClick = (ip: string) => {
     setIpInfo({ ip });
     setShowIpModal(true);
   };
 
-  const handleLeaveRequestAction = async (requestId: string, action: 'APPROVE' | 'REJECT'): Promise<void> => {
+  const handleLeaveRequestAction = async (requestId: string, action: 'APPROVE' | 'REJECT') => {
     try {
       await dataApi.updateLeaveRequest(requestId, action);
       // Reload data after action
@@ -160,6 +127,12 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             <Link
+              to="/schedules"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium shadow-sm"
+            >
+              Schedules
+            </Link>
+            <Link
               to="/proposals"
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium shadow-sm"
             >
@@ -190,6 +163,7 @@ const Dashboard: React.FC = () => {
                 workOrders={workOrders}
                 sopRecords={sopRecords}
                 leaveRequests={leaveRequests}
+                scheduleRules={scheduleRules}
                 currentDate={currentDate}
                 selectedEmployee={selectedEmployee}
                 onMonthChange={handleMonthChange}
@@ -253,13 +227,15 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         )}
-      </div>
 
-      <IpInfoModal
-        ipInfo={ipInfo}
-        isOpen={showIpModal}
-        onClose={() => setShowIpModal(false)}
-      />
+        {showIpModal && ipInfo && (
+          <IpInfoModal
+            isOpen={showIpModal}
+            onClose={() => setShowIpModal(false)}
+            ipInfo={ipInfo}
+          />
+        )}
+      </div>
     </div>
   );
 };

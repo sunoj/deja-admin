@@ -40,60 +40,59 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminToken } from '../../middleware/auth';
 
 export async function onRequest(context) {
-  const supabaseUrl = context.env.SUPABASE_URL;
-  const supabaseKey = context.env.SUPABASE_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    return new Response(JSON.stringify({
-      error: 'Supabase configuration is missing'
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
-    });
-  }
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json'
+  };
 
+  // Handle preflight requests
   if (context.request.method === 'OPTIONS') {
     return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
-    });
-  }
-
-  if (context.request.method !== 'POST') {
-    return new Response(JSON.stringify({
-      error: 'Method not allowed'
-    }), {
-      status: 405,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers: corsHeaders,
+      status: 204,
     });
   }
 
   try {
+    const supabaseUrl = context.env.SUPABASE_URL;
+    const supabaseKey = context.env.SUPABASE_KEY;
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { startDate, endDate, employeeId } = await context.request.json();
+
+    // Verify admin token
+    const authHeader = context.request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: corsHeaders
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    try {
+      await verifyAdminToken(token, supabase);
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 401,
+        headers: corsHeaders
+      });
+    }
+
+    // Get parameters from URL query string
+    const url = new URL(context.request.url);
+    const startDate = url.searchParams.get('start_date');
+    const endDate = url.searchParams.get('end_date');
+    const employeeId = url.searchParams.get('employee_id');
 
     if (!startDate || !endDate) {
       return new Response(JSON.stringify({
         error: 'Start date and end date are required'
       }), {
         status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
+        headers: corsHeaders
       });
     }
 
@@ -111,7 +110,10 @@ export async function onRequest(context) {
         ),
         start_date,
         end_date,
+        reason,
         status,
+        medical_certificate_url,
+        created_at,
         updated_at
       `)
       .gte('start_date', startDate)
@@ -129,10 +131,7 @@ export async function onRequest(context) {
         details: fetchError.message
       }), {
         status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
+        headers: corsHeaders
       });
     }
 
@@ -145,15 +144,15 @@ export async function onRequest(context) {
       leave_type_name: request.leave_types?.name || 'Unknown',
       start_date: request.start_date,
       end_date: request.end_date,
+      reason: request.reason,
       status: request.status,
+      medical_certificate_url: request.medical_certificate_url,
+      created_at: request.created_at,
       updated_at: request.updated_at
     }));
 
-    return new Response(JSON.stringify(transformedData), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+    return new Response(JSON.stringify({ leave_requests: transformedData }), {
+      headers: corsHeaders
     });
   } catch (error) {
     return new Response(JSON.stringify({
@@ -161,10 +160,7 @@ export async function onRequest(context) {
       details: error.message
     }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers: corsHeaders
     });
   }
 } 

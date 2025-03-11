@@ -7,6 +7,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   workOrders,
   sopRecords,
   leaveRequests,
+  scheduleRules,
   currentDate,
   selectedEmployee,
   onMonthChange
@@ -20,34 +21,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       workOrders: workOrders?.length || 0,
       sopRecords: sopRecords?.length || 0,
       leaveRequests: leaveRequests?.length || 0,
+      scheduleRules: scheduleRules?.length || 0,
       currentDate,
-      selectedEmployee,
-      sampleData: {
-        checkins: checkins?.slice(0, 2).map(c => ({
-          id: c.id,
-          created_at: c.created_at,
-          date: new Date(c.created_at).toLocaleString()
-        })),
-        workOrders: workOrders?.slice(0, 2).map(w => ({
-          id: w.id,
-          created_at: w.created_at,
-          date: new Date(w.created_at).toLocaleString()
-        })),
-        sopRecords: sopRecords?.slice(0, 2).map(s => ({
-          id: s.id,
-          created_at: s.created_at,
-          date: new Date(s.created_at).toLocaleString()
-        })),
-        leaveRequests: leaveRequests?.slice(0, 2).map(l => ({
-          id: l.id,
-          start_date: l.start_date,
-          end_date: l.end_date,
-          start: new Date(l.start_date).toLocaleString(),
-          end: new Date(l.end_date).toLocaleString()
-        }))
-      }
+      selectedEmployee
     });
-  }, [checkins, workOrders, sopRecords, leaveRequests, currentDate, selectedEmployee]);
+  }, [checkins, workOrders, sopRecords, leaveRequests, scheduleRules, currentDate, selectedEmployee]);
 
   const getDaysInMonth = (date: Date): number => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -64,82 +42,93 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     });
   };
 
+  const isWorkDay = (date: Date, rules: typeof scheduleRules): boolean => {
+    // Find the applicable rule for this date
+    const applicableRule = rules.find(rule => {
+      const startDate = new Date(rule.start_date);
+      const endDate = rule.end_date ? new Date(rule.end_date) : null;
+      
+      return date >= startDate && (!endDate || date <= endDate) &&
+             (rule.employee_id === selectedEmployee || rule.is_default);
+    });
+
+    if (!applicableRule) return true; // Default to workday if no rule found
+
+    // Check if the day of week is in work_days
+    const dayOfWeek = date.getDay();
+    return applicableRule.work_days.includes(dayOfWeek);
+  };
+
   const getEventsForDay = (date: Date) => {
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
 
-    console.log('Comparing dates for:', date.toISOString());
-    console.log('Day start:', dayStart.toISOString());
-    console.log('Day end:', dayEnd.toISOString());
-
     const filteredCheckins = checkins.filter(checkin => {
       const checkinDate = new Date(checkin.created_at);
-      const isAfterStart = checkinDate >= dayStart;
-      const isBeforeEnd = checkinDate <= dayEnd;
-      console.log('Checkin comparison:', {
-        id: checkin.id,
-        date: checkinDate.toISOString(),
-        isAfterStart,
-        isBeforeEnd
-      });
-      return isAfterStart && isBeforeEnd;
+      return checkinDate >= dayStart && checkinDate <= dayEnd;
     });
 
     const filteredWorkOrders = workOrders.filter(order => {
       const orderDate = new Date(order.created_at);
-      const isAfterStart = orderDate >= dayStart;
-      const isBeforeEnd = orderDate <= dayEnd;
-      console.log('Work order comparison:', {
-        id: order.id,
-        date: orderDate.toISOString(),
-        isAfterStart,
-        isBeforeEnd
-      });
-      return isAfterStart && isBeforeEnd;
+      return orderDate >= dayStart && orderDate <= dayEnd;
     });
 
     const filteredSopRecords = sopRecords.filter(record => {
       const recordDate = new Date(record.created_at);
-      const isAfterStart = recordDate >= dayStart;
-      const isBeforeEnd = recordDate <= dayEnd;
-      console.log('SOP record comparison:', {
-        id: record.id,
-        date: recordDate.toISOString(),
-        isAfterStart,
-        isBeforeEnd
-      });
-      return isAfterStart && isBeforeEnd;
+      return recordDate >= dayStart && recordDate <= dayEnd;
     });
 
     const filteredLeaveRequests = leaveRequests.filter(request => {
       const startDate = new Date(request.start_date);
       const endDate = new Date(request.end_date);
-      const isAfterStart = startDate <= dayEnd;
-      const isBeforeEnd = endDate >= dayStart;
-      console.log('Leave request comparison:', {
-        id: request.id,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        isAfterStart,
-        isBeforeEnd
-      });
-      return isAfterStart && isBeforeEnd;
+      return startDate <= dayEnd && endDate >= dayStart;
     });
 
-    console.log('Filtered results:', {
-      checkins: filteredCheckins.length,
-      workOrders: filteredWorkOrders.length,
-      sopRecords: filteredSopRecords.length,
-      leaveRequests: filteredLeaveRequests.length
-    });
+    // Get scheduled employees for this day
+    const scheduledEmployeeIds = scheduleRules
+      .filter(rule => {
+        const startDate = new Date(rule.start_date);
+        const endDate = rule.end_date ? new Date(rule.end_date) : null;
+        const isInDateRange = date >= startDate && (!endDate || date <= endDate);
+        const isWorkDay = rule.work_days.includes(date.getDay());
+        return isInDateRange && isWorkDay;
+      })
+      .map(rule => rule.employee_id)
+      .filter(Boolean);
+
+    // Get employee names from checkins data
+    const scheduledEmployeeNames = checkins
+      .filter(checkin => scheduledEmployeeIds.includes(checkin.employee_id))
+      .map(checkin => checkin.employees?.name)
+      .filter((name, index, self) => name && self.indexOf(name) === index); // Remove duplicates and nulls
+
+    // Add names from leave requests if not already included
+    leaveRequests
+      .filter(request => scheduledEmployeeIds.includes(request.employee_id))
+      .forEach(request => {
+        if (request.employee_name && !scheduledEmployeeNames.includes(request.employee_name)) {
+          scheduledEmployeeNames.push(request.employee_name);
+        }
+      });
+
+    // Add names from SOP records if not already included
+    sopRecords
+      .filter(record => scheduledEmployeeIds.includes(record.employee_id))
+      .forEach(record => {
+        if (record.employee?.name && !scheduledEmployeeNames.includes(record.employee.name)) {
+          scheduledEmployeeNames.push(record.employee.name);
+        }
+      });
 
     return {
       checkins: filteredCheckins,
       workOrders: filteredWorkOrders,
       sopRecords: filteredSopRecords,
-      leaveRequests: filteredLeaveRequests
+      leaveRequests: filteredLeaveRequests,
+      isWorkDay: isWorkDay(date, scheduleRules),
+      scheduledEmployees: scheduledEmployeeNames
     };
   };
 
@@ -157,30 +146,34 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const events = getEventsForDay(date);
-      const hasEvents = Object.values(events).some(arr => arr.length > 0);
-
-      // Debug logging for day rendering
-      if (hasEvents) {
-        console.log('Day has events:', {
-          date: date.toLocaleString(),
-          events: {
-            checkins: events.checkins.length,
-            workOrders: events.workOrders.length,
-            sopRecords: events.sopRecords.length,
-            leaveRequests: events.leaveRequests.length
-          }
-        });
-      }
+      const hasEvents = Object.values({
+        checkins: events.checkins,
+        workOrders: events.workOrders,
+        sopRecords: events.sopRecords,
+        leaveRequests: events.leaveRequests
+      }).some(arr => arr.length > 0);
 
       days.push(
         <div
           key={day}
           className={`h-32 p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 ${
-            hasEvents ? 'bg-blue-50' : ''
-          }`}
+            events.isWorkDay ? 'bg-blue-50' : ''
+          } ${hasEvents ? 'has-events' : ''}`}
           onClick={() => setSelectedDate(date)}
         >
-          <div className="font-medium text-gray-900">{day}</div>
+          <div className="flex justify-between items-center">
+            <span className="font-medium text-gray-900">{day}</span>
+            <span className={`text-xs px-2 py-1 rounded ${
+              events.isWorkDay ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+            }`}>
+              {events.isWorkDay ? 'Work' : 'Off'}
+            </span>
+          </div>
+          {events.scheduledEmployees.length > 0 && (
+            <div className="mt-1 text-xs text-blue-700 font-medium">
+              {events.scheduledEmployees.join(', ')}
+            </div>
+          )}
           <div className="mt-1 space-y-1">
             {events.checkins.length > 0 && (
               <div className="text-xs text-blue-600">
