@@ -170,7 +170,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             </span>
           </div>
           {events.scheduledEmployees.length > 0 && (
-            <div className="mt-1 text-xs text-blue-700 font-medium">
+            <div className="mt-1 text-xs text-blue-700 font-medium hidden md:block">
               {events.scheduledEmployees.join(', ')}
             </div>
           )}
