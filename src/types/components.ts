@@ -37,6 +37,7 @@ export interface DaySummaryModalProps {
   workOrders: WorkOrder[];
   sopRecords: SopRecord[];
   leaveRequests: LeaveRequest[];
+  scheduledEmployees: string[];
   onIpClick: (ip: string) => void;
   onLeaveRequestAction: (request: LeaveRequest) => void;
 }

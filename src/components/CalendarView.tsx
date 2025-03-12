@@ -164,9 +164,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           <div className="flex justify-between items-center">
             <span className="font-medium text-gray-900">{day}</span>
             <span className={`text-xs px-2 py-1 rounded ${
-              events.isWorkDay ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+              events.scheduledEmployees.length > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
             }`}>
-              {events.isWorkDay ? 'Work' : 'Off'}
+              {events.scheduledEmployees.length > 0 ? `${events.scheduledEmployees.length} on duty` : 'Off'}
             </span>
           </div>
           {events.scheduledEmployees.length > 0 && (
@@ -257,6 +257,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           workOrders={getEventsForDay(selectedDate).workOrders}
           sopRecords={getEventsForDay(selectedDate).sopRecords}
           leaveRequests={getEventsForDay(selectedDate).leaveRequests}
+          scheduledEmployees={getEventsForDay(selectedDate).scheduledEmployees}
           onIpClick={() => {}}
           onLeaveRequestAction={() => {}}
         />

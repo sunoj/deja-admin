@@ -10,7 +10,8 @@ const DaySummaryModal: React.FC<DaySummaryModalProps> = ({
   sopRecords,
   leaveRequests,
   onIpClick,
-  onLeaveRequestAction
+  onLeaveRequestAction,
+  scheduledEmployees
 }) => {
   if (!isOpen) return null;
 
@@ -55,6 +56,20 @@ const DaySummaryModal: React.FC<DaySummaryModalProps> = ({
         </div>
 
         <div className="space-y-6">
+          {/* Scheduled Employees */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-500 mb-2">Scheduled Employees</h4>
+            <div className="bg-gray-50 rounded-lg p-4">
+              {scheduledEmployees.length === 0 ? (
+                <p className="text-sm text-gray-500">No employees scheduled for this day</p>
+              ) : (
+                <div className="text-sm text-gray-900">
+                  {scheduledEmployees.join(', ')}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Check-ins */}
           <div>
             <h4 className="text-sm font-medium text-gray-500 mb-2">Check-ins</h4>
