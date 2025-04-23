@@ -98,27 +98,36 @@ const CalendarView: React.FC<CalendarViewProps> = ({
       .map(rule => rule.employee_id)
       .filter(Boolean);
 
+    // Get employee IDs with approved leave requests for this day
+    const employeesOnLeave = filteredLeaveRequests
+      .filter(request => request.status === 'APPROVED')
+      .map(request => request.employee_id);
+
+    // Filter out employees who have approved leave requests
+    const scheduledEmployeeIdsWithoutLeave = scheduledEmployeeIds
+      .filter(id => !employeesOnLeave.includes(id));
+
     // Get employee names from checkins data
     const scheduledEmployeeNames = checkins
-      .filter(checkin => scheduledEmployeeIds.includes(checkin.employee_id))
+      .filter(checkin => scheduledEmployeeIdsWithoutLeave.includes(checkin.employee_id))
       .map(checkin => checkin.employees?.name)
       .filter((name, index, self) => name && self.indexOf(name) === index); // Remove duplicates and nulls
 
-    // Add names from leave requests if not already included
-    leaveRequests
-      .filter(request => scheduledEmployeeIds.includes(request.employee_id))
-      .forEach(request => {
-        if (request.employee_name && !scheduledEmployeeNames.includes(request.employee_name)) {
-          scheduledEmployeeNames.push(request.employee_name);
-        }
-      });
-
     // Add names from SOP records if not already included
     sopRecords
-      .filter(record => scheduledEmployeeIds.includes(record.employee_id))
+      .filter(record => scheduledEmployeeIdsWithoutLeave.includes(record.employee_id))
       .forEach(record => {
         if (record.employee?.name && !scheduledEmployeeNames.includes(record.employee.name)) {
           scheduledEmployeeNames.push(record.employee.name);
+        }
+      });
+
+    // Add names from non-approved leave requests if not already included
+    leaveRequests
+      .filter(request => scheduledEmployeeIdsWithoutLeave.includes(request.employee_id))
+      .forEach(request => {
+        if (request.employee_name && !scheduledEmployeeNames.includes(request.employee_name)) {
+          scheduledEmployeeNames.push(request.employee_name);
         }
       });
 
