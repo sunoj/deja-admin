@@ -39,9 +39,14 @@ export type ApiHeaders = Record<string, string>;
 export interface Employee {
   id: string;
   name: string;
-  email: string;
-  role: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  email?: string;
+  role?: string;
+  status?: 'ACTIVE' | 'INACTIVE';
+  is_deleted: boolean;
+  employment_status: string;
+  created_at: string;
+  updated_at: string;
+  recent_checkins?: Checkin[];
 }
 
 export interface Checkin {

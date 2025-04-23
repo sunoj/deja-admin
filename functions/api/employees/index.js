@@ -19,14 +19,23 @@ export async function onRequestGet(context) {
     const url = new URL(context.request.url);
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '20');
+    const includeDeleted = url.searchParams.get('include_deleted') === 'true';
     
     // Calculate offset based on page and limit
     const offset = (page - 1) * limit;
 
-    // Query employees with pagination
-    const { data: employees, error, count } = await supabase
+    // Create query
+    let query = supabase
       .from('employees')
-      .select('*', { count: 'exact' })
+      .select('*', { count: 'exact' });
+    
+    // Filter out deleted employees unless explicitly requested
+    if (!includeDeleted) {
+      query = query.eq('is_deleted', false);
+    }
+    
+    // Apply ordering and pagination
+    const { data: employees, error, count } = await query
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -42,7 +51,9 @@ export async function onRequestGet(context) {
       id: employee.id,
       name: employee.name,
       created_at: employee.created_at,
-      updated_at: employee.updated_at
+      updated_at: employee.updated_at,
+      is_deleted: employee.is_deleted,
+      employment_status: employee.employment_status
     }));
 
     // Calculate total pages

@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ScheduleManagement from './pages/ScheduleManagement';
+import EmployeeManagement from './pages/EmployeeManagement';
 import PrivateRoute from './components/PrivateRoute';
 import ProposalList from './pages/ProposalList';
 import ProposalDetail from './pages/ProposalDetail';
@@ -22,6 +23,14 @@ const App: React.FC = () => {
             element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/employees"
+            element={
+              <PrivateRoute>
+                <EmployeeManagement />
               </PrivateRoute>
             }
           />

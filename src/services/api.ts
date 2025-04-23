@@ -124,12 +124,48 @@ export const dataApi = {
     return Array.isArray(data) ? data : (data.checkins || []);
   },
 
-  getEmployees: async (): Promise<Employee[]> => {
-    const response = await fetch('/api/employees', {
+  getEmployees: async (includeDeleted: boolean = false): Promise<Employee[]> => {
+    let url = '/api/employees';
+    if (includeDeleted) {
+      url += '?include_deleted=true';
+    }
+    const response = await fetch(url, {
       headers: getHeaders(),
     });
     const data = await handleResponse<{ employees: Employee[] } | Employee[]>(response);
     return Array.isArray(data) ? data : (data.employees || []);
+  },
+
+  getEmployee: async (id: string): Promise<Employee> => {
+    const response = await fetch(`/api/employees/${id}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<Employee>(response);
+  },
+
+  updateEmployee: async (
+    id: string, 
+    data: { 
+      name?: string; 
+      is_deleted?: boolean; 
+      employment_status?: string 
+    }
+  ): Promise<Employee> => {
+    const response = await fetch(`/api/employees/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Employee>(response);
+  },
+
+  createEmployee: async (name: string, employment_status?: string): Promise<{ employee: Employee; recoveryCode: string }> => {
+    const response = await fetch('/api/employees/create', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ name, employment_status }),
+    });
+    return handleResponse<{ employee: Employee; recoveryCode: string }>(response);
   },
 
   fetchWorkOrders: async (
