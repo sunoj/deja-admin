@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { dataApi } from '../services/api';
-import { Employee, Checkin } from '../types/api';
+import { Employee, Checkin, LeaveRequest } from '../types/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import LeaveRequestForm from '../components/LeaveRequestForm';
 import { toast } from 'react-toastify';
 
 const EmployeeManagement: React.FC = () => {
@@ -11,6 +12,8 @@ const EmployeeManagement: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [newEmployeeName, setNewEmployeeName] = useState<string>('');
   const [newEmployeeStatus, setNewEmployeeStatus] = useState<string>('active');
+  const [showLeaveRequestForm, setShowLeaveRequestForm] = useState<boolean>(false);
+  const [recentLeaveRequests, setRecentLeaveRequests] = useState<LeaveRequest[]>([]);
   
   // Employment status options
   const statusOptions = [
@@ -43,9 +46,31 @@ const EmployeeManagement: React.FC = () => {
     try {
       const detailedEmployee = await dataApi.getEmployee(employee.id);
       setSelectedEmployee(detailedEmployee);
+      
+      // Fetch recent leave requests for this employee
+      if (detailedEmployee) {
+        fetchEmployeeLeaveRequests(detailedEmployee.id);
+      }
     } catch (error) {
       console.error('Error fetching employee details:', error);
       toast.error('Failed to load employee details');
+    }
+  };
+
+  // Fetch recent leave requests for an employee
+  const fetchEmployeeLeaveRequests = async (employeeId: string) => {
+    try {
+      const today = new Date();
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(today.getMonth() - 6);
+      
+      const startDate = sixMonthsAgo.toISOString().split('T')[0];
+      const endDate = today.toISOString().split('T')[0];
+      
+      const leaveRequests = await dataApi.fetchLeaveRequests(startDate, endDate, employeeId);
+      setRecentLeaveRequests(leaveRequests);
+    } catch (error) {
+      console.error('Error fetching leave requests:', error);
     }
   };
 
@@ -112,10 +137,26 @@ const EmployeeManagement: React.FC = () => {
     }
   };
 
+  // Handle leave request creation
+  const handleLeaveRequestCreated = () => {
+    toast.success('Leave request submitted successfully');
+    setShowLeaveRequestForm(false);
+    
+    // Refresh leave requests if an employee is selected
+    if (selectedEmployee) {
+      fetchEmployeeLeaveRequests(selectedEmployee.id);
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
+  };
+
+  const formatSimpleDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
   };
 
   return (
@@ -156,6 +197,27 @@ const EmployeeManagement: React.FC = () => {
             Add Employee
           </button>
         </form>
+      </div>
+
+      {/* Leave Request Form Section */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-semibold">Leave Requests</h2>
+          <button 
+            onClick={() => setShowLeaveRequestForm(!showLeaveRequestForm)}
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          >
+            {showLeaveRequestForm ? 'Hide Form' : 'New Leave Request'}
+          </button>
+        </div>
+        
+        {showLeaveRequestForm && (
+          <LeaveRequestForm 
+            employees={employees} 
+            onRequestCreated={handleLeaveRequestCreated}
+            preselectedEmployeeId={selectedEmployee?.id}
+          />
+        )}
       </div>
       
       {/* Employee listing */}
@@ -284,6 +346,58 @@ const EmployeeManagement: React.FC = () => {
                 <p>
                   <span className="font-medium">Last Updated:</span> {formatDate(selectedEmployee.updated_at)}
                 </p>
+                
+                {/* Employee Actions */}
+                <div className="mt-4 flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setShowLeaveRequestForm(true);
+                    }}
+                    className="bg-green-500 hover:bg-green-700 text-white text-sm font-bold py-1 px-3 rounded"
+                  >
+                    Add Leave Request
+                  </button>
+                </div>
+                
+                {/* Recent leave requests */}
+                <div className="mt-4">
+                  <h4 className="text-md font-medium mb-2">Recent Leave Requests</h4>
+                  {recentLeaveRequests.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {recentLeaveRequests.map((request) => (
+                            <tr key={request.id}>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {formatSimpleDate(request.start_date)} - {formatSimpleDate(request.end_date)}
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {request.leave_type_name.replace(/_/g, ' ')}
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                  ${request.status === 'APPROVED' ? 'bg-green-100 text-green-800' : 
+                                  request.status === 'REJECTED' ? 'bg-red-100 text-red-800' : 
+                                  'bg-yellow-100 text-yellow-800'}`}>
+                                  {request.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No leave requests found</p>
+                  )}
+                </div>
                 
                 {/* Recent check-ins */}
                 <div className="mt-4">

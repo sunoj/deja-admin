@@ -264,6 +264,37 @@ export const dataApi = {
     await handleResponse(response);
   },
 
+  createLeaveRequest: async (
+    employeeId: string,
+    leaveTypeId: string,
+    startDate: string,
+    endDate: string,
+    reason: string,
+    medicalCertificateUrl?: string
+  ): Promise<LeaveRequest> => {
+    const response = await fetch('/api/leave/request', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        employeeId,
+        leaveTypeId,
+        startDate,
+        endDate,
+        reason,
+        medicalCertificateUrl
+      }),
+    });
+    return handleResponse<LeaveRequest>(response);
+  },
+
+  fetchLeaveTypes: async (): Promise<Array<{id: string, name: string}>> => {
+    const response = await fetch('/api/leave/types', {
+      headers: getHeaders(),
+    });
+    const data = await handleResponse<{leave_types: Array<{id: string, name: string}>}>(response);
+    return data.leave_types || [];
+  },
+
   fetchScheduleRules: async (employeeId: string = 'all'): Promise<ScheduleRule[]> => {
     const params = new URLSearchParams();
     if (employeeId !== 'all') params.append('employee_id', employeeId);
