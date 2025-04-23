@@ -116,8 +116,7 @@ export async function onRequest(context) {
         created_at,
         updated_at
       `)
-      .gte('start_date', startDate)
-      .lte('end_date', endDate);
+      .or(`start_date.lte.${endDate},end_date.gte.${startDate}`);
 
     if (employeeId && employeeId !== 'all') {
       query = query.eq('employee_id', employeeId);
