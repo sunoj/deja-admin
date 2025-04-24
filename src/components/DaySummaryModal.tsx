@@ -192,6 +192,11 @@ const DaySummaryModal: React.FC<DaySummaryModalProps> = ({
                         <span className="text-sm text-gray-900">{request.employee_name}</span>
                         <span className="text-sm text-gray-500 ml-2">
                           ({request.leave_type_name})
+                          {request.is_half_day && (
+                            <span className="ml-1 text-blue-600">
+                              Half Day ({request.half_day_type})
+                            </span>
+                          )}
                         </span>
                         <span className="text-sm text-gray-500 ml-2">
                           {new Date(request.start_date).toLocaleDateString()} - {new Date(request.end_date).toLocaleDateString()}

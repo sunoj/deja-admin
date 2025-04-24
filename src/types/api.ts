@@ -113,6 +113,8 @@ export interface LeaveRequest {
   reason: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   medical_certificate_url?: string;
+  is_half_day: boolean;
+  half_day_type: string | null;
   created_at: string;
   updated_at: string;
 }

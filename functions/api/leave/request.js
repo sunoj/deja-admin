@@ -9,6 +9,8 @@
  *   - reason: text
  *   - medical_certificate_url: string (nullable)
  *   - status: enum ('PENDING', 'APPROVED', 'REJECTED')
+ *   - is_half_day: boolean (default: false)
+ *   - half_day_type: string (nullable, 'AM' or 'PM')
  * 
  * leave_balances:
  *   - id: uuid (primary key)
@@ -29,7 +31,9 @@
  *   "startDate": "YYYY-MM-DD",
  *   "endDate": "YYYY-MM-DD",
  *   "reason": "string",
- *   "medicalCertificateUrl": "string" (optional)
+ *   "medicalCertificateUrl": "string" (optional),
+ *   "isHalfDay": boolean (optional, default: false),
+ *   "halfDayType": "string" (optional, 'AM' or 'PM', required if isHalfDay is true)
  * }
  * 
  * Response Structure:
@@ -42,7 +46,9 @@
  *   "end_date": "YYYY-MM-DD",
  *   "reason": "string",
  *   "medical_certificate_url": "string",
- *   "status": "PENDING"
+ *   "status": "PENDING",
+ *   "is_half_day": boolean,
+ *   "half_day_type": "string"
  * }
  * 
  * Error Responses:
@@ -116,7 +122,9 @@ export async function onRequest(context) {
       startDate, 
       endDate, 
       reason,
-      medicalCertificateUrl 
+      medicalCertificateUrl,
+      isHalfDay = false,
+      halfDayType
     } = await context.request.json();
 
     if (!employeeId || !leaveTypeId || !startDate || !endDate || !reason) {
@@ -128,8 +136,18 @@ export async function onRequest(context) {
       });
     }
 
+    // Validate half day type if isHalfDay is true
+    if (isHalfDay && (!halfDayType || !['AM', 'PM'].includes(halfDayType))) {
+      return new Response(JSON.stringify({
+        error: 'Half day type must be specified as either "AM" or "PM" when requesting a half day leave'
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
+    }
+
     // Calculate number of days
-    const days = getDaysDifference(startDate, endDate);
+    const days = isHalfDay ? 0.5 : getDaysDifference(startDate, endDate);
 
     // Check if medical certificate is required for sick leave
     const { data: leaveType } = await supabase
@@ -181,7 +199,9 @@ export async function onRequest(context) {
         end_date: endDate,
         reason,
         medical_certificate_url: medicalCertificateUrl,
-        status: 'PENDING'
+        status: 'PENDING',
+        is_half_day: isHalfDay,
+        half_day_type: isHalfDay ? halfDayType : null
       })
       .select()
       .single();

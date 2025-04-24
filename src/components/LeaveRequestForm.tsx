@@ -25,6 +25,8 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({
   const [endDate, setEndDate] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [medicalCertificateUrl, setMedicalCertificateUrl] = useState<string>('');
+  const [isHalfDay, setIsHalfDay] = useState<boolean>(false);
+  const [halfDayType, setHalfDayType] = useState<string>('AM');
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -64,6 +66,11 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({
       return;
     }
 
+    if (isHalfDay && startDate !== endDate) {
+      toast.error('Half-day leave must have the same start and end date');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await dataApi.createLeaveRequest(
@@ -72,7 +79,9 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({
         startDate,
         endDate,
         reason,
-        medicalCertificateUrl || undefined
+        medicalCertificateUrl || undefined,
+        isHalfDay,
+        isHalfDay ? halfDayType : undefined
       );
       
       toast.success('Leave request submitted successfully');
@@ -82,6 +91,8 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({
       setEndDate('');
       setReason('');
       setMedicalCertificateUrl('');
+      setIsHalfDay(false);
+      setHalfDayType('AM');
       
       // Notify parent component
       onRequestCreated();
@@ -171,6 +182,58 @@ const LeaveRequestForm: React.FC<LeaveRequestFormProps> = ({
               required
             />
           </div>
+        </div>
+        
+        <div className="mt-4">
+          <div className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id="isHalfDay"
+              checked={isHalfDay}
+              onChange={(e) => {
+                setIsHalfDay(e.target.checked);
+                if (e.target.checked) {
+                  setEndDate(startDate); // Set end date same as start date for half-day
+                }
+              }}
+              className="mr-2"
+            />
+            <label htmlFor="isHalfDay" className="text-sm font-medium text-gray-700">
+              Half Day Leave
+            </label>
+          </div>
+          
+          {isHalfDay && (
+            <div className="ml-6 mt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Half Day Type *
+              </label>
+              <div className="flex space-x-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="halfDayType"
+                    value="AM"
+                    checked={halfDayType === 'AM'}
+                    onChange={() => setHalfDayType('AM')}
+                    className="mr-1"
+                  />
+                  <span className="text-sm">Morning (AM)</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="halfDayType"
+                    value="PM"
+                    checked={halfDayType === 'PM'}
+                    onChange={() => setHalfDayType('PM')}
+                    className="mr-1"
+                  />
+                  <span className="text-sm">Afternoon (PM)</span>
+                </label>
+              </div>
+            </div>
+          )}
         </div>
         
         <div>

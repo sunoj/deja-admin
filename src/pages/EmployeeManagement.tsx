@@ -377,6 +377,11 @@ const EmployeeManagement: React.FC = () => {
                             <tr key={request.id}>
                               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                                 {formatSimpleDate(request.start_date)} - {formatSimpleDate(request.end_date)}
+                                {request.is_half_day && (
+                                  <span className="ml-1 text-blue-600 text-xs">
+                                    (Half Day - {request.half_day_type})
+                                  </span>
+                                )}
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                                 {request.leave_type_name.replace(/_/g, ' ')}

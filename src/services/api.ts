@@ -270,7 +270,9 @@ export const dataApi = {
     startDate: string,
     endDate: string,
     reason: string,
-    medicalCertificateUrl?: string
+    medicalCertificateUrl?: string,
+    isHalfDay?: boolean,
+    halfDayType?: string
   ): Promise<LeaveRequest> => {
     const response = await fetch('/api/leave/request', {
       method: 'POST',
@@ -281,7 +283,9 @@ export const dataApi = {
         startDate,
         endDate,
         reason,
-        medicalCertificateUrl
+        medicalCertificateUrl,
+        isHalfDay,
+        halfDayType
       }),
     });
     return handleResponse<LeaveRequest>(response);
