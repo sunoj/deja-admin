@@ -188,12 +188,14 @@ const ListView: React.FC<ListViewProps> = ({
   };
 
   const downloadLeaveRequestsCSV = () => {
-    const headers = ['Employee Name', 'Leave Type', 'Start Date', 'End Date', 'Status', 'Reason'];
+    const headers = ['Employee Name', 'Leave Type', 'Start Date', 'End Date', 'Half Day', 'Half Day Type', 'Status', 'Reason'];
     const data = leaveRequests.map(request => [
       request.employee_name,
       request.leave_type_name,
       request.start_date,
       request.end_date,
+      request.is_half_day ? 'Yes' : 'No',
+      request.is_half_day ? request.half_day_type : '',
       request.status,
       request.reason
     ]);

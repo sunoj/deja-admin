@@ -8,6 +8,8 @@
  *   - end_date: date
  *   - status: enum ('PENDING', 'APPROVED', 'REJECTED')
  *   - updated_at: timestamp
+ *   - is_half_day: boolean (default: false)
+ *   - half_day_type: string (nullable, 'AM' or 'PM')
  * 
  * leave_types:
  *   - id: uuid (primary key)
@@ -29,7 +31,9 @@
  *     "start_date": "YYYY-MM-DD",
  *     "end_date": "YYYY-MM-DD",
  *     "status": "PENDING|APPROVED|REJECTED",
- *     "updated_at": "timestamp"
+ *     "updated_at": "timestamp",
+ *     "is_half_day": boolean,
+ *     "half_day_type": string
  *   }
  * ]
  * 
@@ -113,6 +117,8 @@ export async function onRequest(context) {
         reason,
         status,
         medical_certificate_url,
+        is_half_day,
+        half_day_type,
         created_at,
         updated_at
       `)
@@ -146,6 +152,8 @@ export async function onRequest(context) {
       reason: request.reason,
       status: request.status,
       medical_certificate_url: request.medical_certificate_url,
+      is_half_day: request.is_half_day || false,
+      half_day_type: request.half_day_type || null,
       created_at: request.created_at,
       updated_at: request.updated_at
     }));
